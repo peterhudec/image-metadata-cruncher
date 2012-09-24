@@ -1,0 +1,16 @@
+input[type="text"] {
+	width: 100%;
+}
+
+.to-be-removed{
+	background-color: red
+}
+
+.error{
+	background-color: red !important
+}
+
+#custom-meta-list{
+	margin-top: 10px;
+	margin-bottom: 10px
+}

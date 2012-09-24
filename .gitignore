@@ -1,0 +1,6 @@
+*.class
+*.pyc
+*.pyo
+pokus.jpg
+.settings
+.project
