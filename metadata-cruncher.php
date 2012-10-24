@@ -10,57 +10,730 @@ License: GPL2
 */
 
 // includes
-include 'functions.php';
-include 'settings.php';
-
-// globals
-$mc_metadata = '';
+require 'mappings.php';
 
 /**
- * The wp_handle_upload_prefilter hook gets triggered before wordpress erases all the image metadata
+ * Main plugin class
  */
-add_action('wp_handle_upload_prefilter', 'mc_upload');
-function mc_upload($file){
-	global $mc_metadata;
+class Image_Metadata_Cruncher_Plugin {
 	
-	// get meta
-	$mc_metadata = parse_meta($file['tmp_name']);
+	// stores metadata between wp_handle_upload_prefilter and add_attachment hooks
+	private $metadata;
 	
-	// return untouched file
-	return $file;
-}
-
-/**
- * The "Caption" input field in the media item form is filled with
- * post excerpt in the get_attachment_fields_to_edit() function
- * 
- * This action copies the attachment's post_content to its post_excerpt
- * after the attachment post is inserted to the DB after file upload
- */
-add_action('add_attachment', 'mc');
-function mc($post_ID){
-	global $mc_metadata;
-	$options = get_option('mc');
-	
-	$post = get_post($post_ID);
-	
-	// title
-	$post->post_title = render_template($options['title']);
-	// caption
-	$post->post_excerpt = render_template($options['caption']);
-	// description
-	$post->post_content = render_template($options['description']);
-	// alt is meta attribute
-	update_post_meta($post_ID, '_wp_attachment_image_alt', render_template($options['alt']));
-	
-	// add custom metadata
-	foreach ($options['custom_meta'] as $key => $value) {
-	    // update or create
-	    $value = render_template($value);
-		add_post_meta($post_ID, $key, $value, true) or update_post_meta($post_ID, $key, $value);
+	/**
+	 * Constructor
+	 */
+	function __construct() {
+		// hooks
+		
+		// plugin settings hooks
+		add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'plugin_action_links' ), 10, 2 );
+		add_filter( 'plugin_row_meta',  array( $this, 'plugin_row_meta' ), 10, 2 );
+		register_activation_hook( __FILE__, array( $this, 'defaults' ) );
+		add_action('admin_init', array( $this, 'init' ) );
+		add_action('admin_menu', array( $this, 'options' ) );
+		
+		// plugin functionality hooks
+		add_action( 'wp_handle_upload_prefilter', array( $this, 'upload' ) );
+		add_action( 'add_attachment', array( $this, 'add_attachment' ) );
 	}
 	
-	wp_update_post( $post );
+	
+	/////////////////////////////////////////////////////////////////////////////////////
+	// Functionality
+	/////////////////////////////////////////////////////////////////////////////////////
+	
+	/**
+	 * The wp_handle_upload_prefilter hook gets triggered before
+	 * wordpress erases all the image metadata
+	 */
+	public function upload( $file ){
+		// get meta
+		$this->metadata = $this->parse_meta($file['tmp_name']);
+		
+		// return untouched file
+		return $file;
+	}
+	
+	/**
+	 * The add_attachment hook gets triggered when the attachment post is created
+	 * in Wordpress media uploads are handled as post
+	 */
+	public function add_attachment( $post_ID ){
+		$options = get_option( $this->prefix );
+		
+		$post = get_post($post_ID);
+		
+		// title
+		$post->post_title = $this->render_template($options['title']);
+		// caption
+		$post->post_excerpt = $this->render_template($options['caption']);
+		// description
+		$post->post_content = $this->render_template($options['description']);
+		// alt is meta attribute
+		update_post_meta($post_ID, '_wp_attachment_image_alt', $this->render_template($options['alt']));
+		
+		// add custom metadata
+		foreach ($options['custom_meta'] as $key => $value) {
+		    // update or create
+		    $value = $this->render_template($value);
+			add_post_meta($post_ID, $key, $value, true) or update_post_meta($post_ID, $key, $value);
+		}
+		
+		wp_update_post( $post );
+	}
+	
+	/**
+	 * returns a structured array with all available metadata of supplied image
+	 */
+	private function parse_meta( $file ) {
+		// extract metadata from file
+		$size = getimagesize( $file, $meta );
+		
+		// parse iptc
+		$iptc = iptcparse( $meta[ 'APP13' ] );
+		foreach ( $iptc as &$i ) {
+			// symplify array structure
+			$i = $i[0];
+		}
+		
+		// parse exif
+		$exif = exif_read_data( $file );
+		
+		// construct the metadata array
+		$this->metadata = array(
+			'size' => $size,
+			'IPTC' => $iptc,
+			'EXIF' => $exif
+		);
+		
+		// no need to return but good for testing
+		return $this->metadata;
+	}
+	
+	/**
+	 * Replaces tags in template string with actual metadata if found
+	 */
+	private function render_template( $template ){
+		
+		// regex pattern for tags
+	    $pattern = '/{([^}]*)}/';
+	    
+		// replace each found tag with result of the replace_parse_tag method
+		$res = preg_replace_callback($pattern, array($this, 'replace_parse_tag'), $template);
+		
+	    $res = $res ? $res : $template;    
+	        
+		// handle escaped curly brackets
+		$res = str_replace(array('\{', '\}'), array('{', '}'), $res);
+		
+		return $res;
+	}
+	
+	/**
+	 * callback for replacing tags found in template
+	 */
+	private function replace_parse_tag( $match ) {
+		// parse and return found tag
+		return $this->parse_tag( $match[1] );
+	}
+	
+	/**
+	 * Returns recursive copy of an array with 
+	 */
+	private function array_keys_to_lower_recursive( $array ) {
+		$array = array_change_key_case( $array, CASE_LOWER );
+		foreach ($array as $key => $value) {
+			if ( is_array( $value ) ) {
+				$array[$key] = $this->array_keys_to_lower_recursive( $value );
+			}
+		}
+		return $array;
+	}
+	
+	
+	private function get_metadata( $metadata, $category, $key ) {
+		$category = strtolower( $category );
+		$key = strtolower( $key );
+		if ( isset( $metadata[$category][$key] ) ) {
+			return $metadata[$category][$key];
+		}
+	}
+	
+	/**
+	 * Searches the $this->metadata property for a metadata field key
+	 * e.g.: IPTC:Caption, IPTC:2.15, EXIF:SerialNumber, EXIF:LensInfo.1
+	 */
+	private function get_meta_by_key( $key, $delimiter = NULL ){
+		global $IPTC_MAPPING, $EXIF_MAPPING;
+		
+		// convert metadata keys to lowercase to allow case insensitive keys
+		$metadata = $this->array_keys_to_lower_recursive( $this->metadata );
+		
+		if ( ! $delimiter ) {
+	    	// default delimiter for array values to be joined with
+	    	$delimiter = ', ';
+	    }
+				
+		// parse key
+		$pieces = explode(':', $key);
+		
+		// get case insensitive metadata category: "ALL", "EXIF" or "IPTC"
+		$category = strtolower( $pieces[0] );
+		
+		if ( count( $pieces ) > 1 ) {
+			// parse path pieces separated by dot
+			$path = explode( '>', $pieces[1] );
+		} else {
+			// tag is not valid without anything after colon e.g. "EXIF:"
+			return; // exit and return nothing			
+		}
+		
+		// start search
+		$value = $key = NULL;
+		
+		if ( $category == 'all' ) {
+			// returns all metadata structured according to key
+				
+			switch ( strtolower( $pieces[1] )  ) {
+				case 'php':
+					//return print_r( $this->metadata, TRUE );
+					return print_r( $metadata, TRUE );
+					break;
+					
+				case 'json':
+					return json_encode( $this->metadata );
+					break;
+					
+				case 'xml':
+					// not implemented yet
+					break;
+				
+				default:
+					break;
+			}
+		}
+		
+		if ( $category == 'iptc' ) {
+			// if key starts with "IPTC"
+			
+			// search for named keyword in the IPTC mapping e.g. "IPTC:FileFormat"
+			$key = array_search( strtolower( $pieces[1] ), array_map( strtolower, $IPTC_MAPPING ));
+			
+			// if nothing found search for IPTC by code e.g. "IPTC:2#025"...
+			if( !$key ) {
+				
+				// ...but first normalize the IPTC code
+				if ( count( $path ) == 1 ) {
+					
+					// if only one number specified, fall back to "[n]#000" e.g. "IPTC:1" becomes "IPTC:1#000"
+					$key = sprintf("%d#000", $path[0]);
+				} else {
+					
+					// else pad leading zeros if missing e.g. "IPTC:2.5" becomes "IPTC:2#005"
+					$key = sprintf("%d#%03d", $path[0], $path[1]);
+				}
+				
+			}
+			
+			// now that we have a key search for it in the extracted metadata
+			$value = $this->get_metadata( $metadata, $category, $key );
+				
+		} elseif ( $category == 'exif' ) {
+			// if key starts with "EXIF" e.g. {EXIF:whatever.whateverelse}
+			
+			// key is the first part of the path
+			$key = $path[0];
+			
+			// try to fin value directly in the keys returned by exif_read_data() function
+			// e.g. {EXIF:Model}
+			$value = $this->get_metadata( $metadata, $category, $key );
+			
+			if( ! $value ){
+				// some EXIF tags are returned by the exif_read_data() functions like "UndefinedTag:0x####"
+				// so if nothing found try looking up for "UndefinedTag:0x####"
+				
+				// since we need an uppercase hex number e.g. 0xA432 but with lowercase 0x part
+				//  we convert the key to base 16 integer and then back to uppercase string
+				$key = strtoupper( dechex( intval( $key, 16 ) ) );
+				
+				// construct the "UndefinedTag:0x####" key and search for it in the extracted metadata
+				$key = "UndefinedTag:0x$key";
+				$value = $this->get_metadata( $metadata, $category, $key );
+			}
+			
+			if( ! $value ){
+				// if still no success try again but lookup for the hex ID in the $EXIF_MAPPING
+				
+				// reset key to the first part of the path
+				$key = $path[0];
+				
+				// find the appropriate EXIF hex code in the mapping...
+				$key = array_search( strtolower( $key ), array_map( strtolower, $EXIF_MAPPING ));
+				// ...and convert to base 16 integer
+				$key = intval( $key , 16 );
+				
+				// convert to uppercase string
+				$key = strtoupper( dechex( $key ) );
+				
+				// construct key
+				$key = "UndefinedTag:0x$key";
+				
+				// and search for it in the extracted metadata
+				$value = $this->get_metadata( $metadata, $category, $key );
+			}
+		}
+		
+		if ( is_array( $value ) ) {
+			// if the found value is array... 
+			
+			if( isset( $path[1] ) ){
+				// if array index specified in the tag e.g. "EXIF:LensInfo.2"
+				
+				if ( isset( $value[$path[1]] ) ) {
+					
+					// the returned value will be the value of the specified index 
+					$value = $value[$path[1]];
+				}
+				
+			} else {
+				
+				// if no index specified in the tag e.g. "EXIF:LensInfo"
+				// join the array to a string by the delimiter
+				$value = implode( $delimiter, $value );
+			}
+		}
+		
+		// finally return the value for the key
+		return $value;
+	}
+	
+	/**
+	 * Gets the tag contents without curly braces e.g. 'IPTC:Caption | EXIF:Model ? "default" : "delimiter"'
+	 * parses the tag and returns the value of the first succesful key or the specified default string
+	 * if the found value is an array it returns its values joined with the specified delimiter
+	 */
+	private function parse_tag( $tag ) {
+		
+		$pred = ($tag == "iptc:caption&gt;bla?&quot;ok&quot;");
+		
+		// restore escaped characters
+		// &gt;		to >
+		// &#039;	to '
+		// &quot;	to "
+		$tag = str_replace( 
+			array(
+				'&gt;',
+				'&#039;',
+				'&quot;'
+			),
+			array(
+				'>',
+				"'",
+				'"'
+			),
+			$tag
+		);
+		
+		$po = ($tag == 'iptc:caption>bla?"ok"');
+		
+		// regex pattern captures 3 groups KEYWORDS, DEFAULT and DELIMITER
+		$pattern = '/
+	    (?:
+	        (?:
+	            ^ | \|                  # leading pipe (|) or beginning of string = KEYWORD
+	        )
+	        \s*                         # allow whitespace
+	        (?P<keywords> [\w:.>]+ )    # capture KEYWORDS
+	        \s*                         # allow whitespace
+	    )
+	    (?:
+	        \?                          # leading question mark (?) = DEFAULT
+	        \s*                         # allow whitespace
+	        ["\']                       # require double or single quote
+	        (?P<default> [^"\']+ )      # capture DEFAULT
+	        ["\']                       # require double or single quote
+	        \s*                         # allow whitespace
+	    )?
+	    (?:
+	        :                           # leading colon (:) = DELIMITER
+	        \s*                         # allow whitespace
+	        ["\']                       # require double or single quote
+	        (?P<delimiter> [^"\']+ )    # capture DELIMITER
+	        ["\']                       # require double or single quote
+	        \s*                         # allow whitespace
+	    )?
+	    /x';
+	    
+		// execute match
+	    $m = preg_match_all( $pattern, $tag, $match );
+	    
+		// extract only keys with value
+	    $keywords = array_filter( $match[ 'keywords' ] );
+		$default = array_pop( array_filter( $match[ 'default' ] ) );
+	    $delimiter = array_pop( array_filter( $match[ 'delimiter' ] ) );
+	    		
+	    // loop through keywords...
+	    foreach ( $keywords as $keyword ) {
+	    	
+			// search for key in metadata extracted from the image
+	        $meta = $this->get_meta_by_key( $keyword, $delimiter );
+	        
+	        if( $meta ) {
+	        	// return first found meta
+	            return $meta;
+	        }
+	    }
+		
+		// if flow gets here nothing was found so return default
+		if($default){
+			return $default;
+		}else{
+			return '';
+		}
+		
+	}
+	
+	
+	/////////////////////////////////////////////////////////////////////////////////////
+	// Settings
+	/////////////////////////////////////////////////////////////////////////////////////
+	
+	private $settings_slug = 'mc-options';
+	private $donate_url = 'http://www.paypal.com';
+	private $option_name = 'mc';
+	public $prefix = 'image_metadata_cruncher';
+	
+	/**
+	 * Adds action links to the plugin
+	 */
+	public function plugin_action_links( $links, $file ) {
+		
+	    static $this_plugin;
+	    if ( ! $this_plugin ) {
+	        $this_plugin = plugin_basename( __FILE__ );
+	    }
+		
+	    if ( $file == $this_plugin ) {
+	    	$url = get_bloginfo( 'wpurl' ) . "/wp-admin/admin.php?page=$this->settings_slug";
+	        $settings_link = "<a href=\"$url\">Settings</a>";
+	        array_unshift( $links, $settings_link );
+	    }
+		
+	    return $links;
+	}
+	
+	/**
+	 * Adds action links to the plugin row
+	 */
+	public function plugin_row_meta( $links, $file ) {
+		if ( $file == plugin_basename( __FILE__ ) ) {
+			$url = get_bloginfo( 'wpurl' ) . "/wp-admin/admin.php?page=$this->settings_slug";
+	        $links[] = "<a href=\"$url\">Settings</a>";
+			$links[] = "<a href=\"$this->donate_url\">Donate</a>";
+		}
+		return $links;
+	}
+	
+	/**
+	 * js and css
+	 */
+	function js_rangy_core() { wp_enqueue_script( "{$this->prefix}_rangy_core" ); }
+	function js_rangy_selectionsaverestore() { wp_enqueue_script( "{$this->prefix}_rangy_selectionsaverestore" ); }
+	function js() { wp_enqueue_script( "{$this->prefix}_script" ); }
+	function js_highlighting() { wp_enqueue_script( "{$this->prefix}_highlighting" ); }
+	function css() { wp_enqueue_style( "{$this->prefix}_style" ); }
+	
+	/**
+	 * Default plugin options
+	 */
+	public function defaults(){
+		add_option( $this->option_name, array(
+			'title' => '',
+			'alt' => '',
+			'caption' => '',
+			'description' => '',
+			'file_url' => '',
+			'image_size' => '',
+			'custom_meta' => array()
+		) );
+	}
+	
+	/**
+	 * Adds section to plugin admin page
+	 */
+	private function section($id, $title) {
+		add_settings_section(
+			"{$this->prefix}_section_{$id}",					// section id
+			$title,								// title
+			array( $this, "section_{$id}" ),	// callback
+			"{$this->prefix}-section-{$id}");				// page
+	}
+	
+	/**
+	 * Plugin initialization
+	 */
+	public function init() {
+	    
+	    // register stylesheet and script for admin
+	    //js_rangy
+	    wp_register_script( "{$this->prefix}_rangy_core", plugins_url( 'rangy-core.js', __FILE__ ) );
+	    wp_register_script( "{$this->prefix}_rangy_selectionsaverestore", plugins_url( 'rangy-selectionsaverestore.js', __FILE__ ) );
+	    wp_register_script( "{$this->prefix}_script", plugins_url( 'script.js', __FILE__ ) );
+	    wp_register_script( "{$this->prefix}_highlighting", plugins_url( 'highlighting.js', __FILE__ ) );
+	    wp_register_style( "{$this->prefix}_style", plugins_url( 'style.css', __FILE__ ) );
+	    
+	    ///////////////////////////////////
+	    // Sections
+	    ///////////////////////////////////
+	    $this->section( 1, 'Media form fields:' );
+	    $this->section( 2, 'Custom image meta tags:' );
+	    $this->section( 3, 'Available metadata variables:' );
+	    
+	    ///////////////////////////////////
+	    // Options
+	    ///////////////////////////////////
+	    
+	    // Title
+	    // register a new setting...
+	    register_setting(
+	        "{$this->prefix}_title",         		// option group
+	        $this->prefix,               		// option name
+	        array( $this, 'sanitizator' )	// sanitizator
+	    );              
+	    // ...and add it to a section
+	    add_settings_field(
+	        "{$this->prefix}_title",         		// field id
+	        'Title:',           		// title
+	        array( $this, 'title_cb' ), // callback
+	        "{$this->prefix}-section-1",     		// section page
+	        "{$this->prefix}_section_1");    		// section id
+	    
+	    // Alternate text
+	    register_setting(
+	        "{$this->prefix}_alt",           		// option group
+	        $this->prefix,               		// option name
+	        array( $this, 'sanitizator' ) // sanitizator
+	    );
+	    add_settings_field(
+	        "{$this->prefix}_alt",           		// field id
+	        'Alternate text:',          // title
+	        array( $this, 'alt_cb' ),   // callback
+	        "{$this->prefix}-section-1",     		// section page
+	        "{$this->prefix}_section_1");    		// section id
+	    
+	    // Caption
+	    register_setting(
+	        "{$this->prefix}_caption",       		// option group
+	        $this->prefix,               		// option name
+	        array( $this, 'sanitizator' ) // sanitizator
+	    );
+	    add_settings_field(
+	        "{$this->prefix}_caption",       		// field id
+	        'Caption:', 				// title
+	        array( $this, 'caption_cb' ),	// callback
+	        "{$this->prefix}-section-1",     			// section page
+	        "{$this->prefix}_section_1");    			// section id
+	    
+	    // Description
+	    register_setting(
+	        "{$this->prefix}_description",   			// option group
+	        $this->prefix,               			// option name
+	        array( $this, 'sanitizator' )     // sanitizator
+	    );
+	    add_settings_field(
+	        "{$this->prefix}_description",   			// field id
+	        'Description:',     			// title
+	        array( $this, 'description_cb' ),	// callback
+	        "{$this->prefix}-section-1",     				// section page
+	        "{$this->prefix}_section_1");    				// section id
+	}
+	
+	/**
+	 * Plugin options callback
+	 */
+	public function options() {
+		$page = add_plugins_page(
+			'Metadata Cruncher',
+			'Metadata Cruncher',
+			'administrator',
+			"{$this->prefix}-options",
+			array( $this, 'options_cb' )
+		);
+		add_action( 'admin_print_scripts-' . $page, array( $this, 'js_rangy_core' ) );
+		add_action( 'admin_print_scripts-' . $page, array( $this, 'js_rangy_selectionsaverestore' ) );
+		add_action( 'admin_print_scripts-' . $page, array( $this, 'js_highlighting' ) );
+	    add_action( 'admin_print_scripts-' . $page, array( $this, 'js' ) );
+	    add_action( 'admin_print_styles-' . $page, array( $this, 'css' ) );
+	}
+	
+	/**
+	 * Options page callback
+	 */
+	public function options_cb() { ?>
+		<div id="metadata-cruncher" class="wrap metadata-cruncher">
+			<h2>Metadata Cruncher options</h2>
+			<?php settings_errors(); ?>
+			<form action="options.php" method="post">
+				<?php settings_fields( "{$this->prefix}_title" ); // renders hidden input fields ?>
+				<?php settings_fields( "{$this->prefix}_alt" ); // renders hidden input fields ?>
+				<?php do_settings_sections( "{$this->prefix}-section-1" ); ?>
+				<?php do_settings_sections( "{$this->prefix}-section-2" ); ?>	
+				<?php do_settings_sections( "{$this->prefix}-section-3" ); ?>		
+				<?php submit_button(); ?>
+			</form>
+			<p>Created by <strong>Peter Hudec</strong>, <a href="http://peterhudec.com" target="_blank">peterhudec.com</a>.</p>
+		</div>
+	<?php }
+	
+	///////////////////////////////////
+    // Section callbacks
+    ///////////////////////////////////
+    
+    public function section_1() { ?>
+		<p>
+		    Specify texts with which should the media upload form be prepopulated with.
+		    You can use metadata tags inside curly brackets<code>{}</code>.
+		    <br />
+		    <strong>Example:</strong> <code>Image was taken with {EXIF:Model} camera.</code>
+		</p>
+	<?php }
+	
+	public function section_2() { ?>
+	    <?php $options = get_option( $this->prefix ); ?>
+		<i>You can also specify your own meta fields that will be saved to the database with the picture.</i>
+		<table id="custom-meta-list" class="widefat">
+			<thead>
+				<th>Name</th>
+				<th>Template</th>
+				<th>Delete</th>
+			</thead>
+			<?php foreach ($options['custom_meta'] as $key => $value): ?>
+				<tr>
+	                <td><input type="text" class="name" value="<?php echo $key ?>" /></td>
+	                <td>
+	                	<div class="ce" contenteditable="true"><?php echo $value ?></div>
+	                	<?php // used textarea because hidden input caused bugs when whitespace got converted to &nbsp; ?>
+	                	<textarea class="hidden-input template" name="<?php echo $this->prefix; ?>[custom_meta][<?php echo $key ?>]" ><?php echo $value ?></textarea>
+	                </td>
+	                <td><button class="button">Remove</button></td>
+				</tr>
+			<?php endforeach ?>
+		</table>
+		<div>
+			<button id="add-custom-meta" class="button">Add New Field</button>
+		</div>	
+	<?php }
+	
+	public function section_3() { ?>
+		<table>
+			<thead>
+				<th>
+					IPTC
+				</th>
+				<th>
+					EXIF
+				</th>
+			</thead>
+			<tbody>
+				<tr>
+					<td>
+						<table class="widefat">
+							<thead>
+								<th>
+									Tag
+								</th>
+								<th>
+									Alternative
+								</th>
+							</thead>
+							<tbody>
+								<tr>
+									<td>
+										IPTC:ObjectName
+									</td>
+									<td>
+										IPTC:2.005
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</td>
+					<td>
+						<table class="widefat">
+							<thead>
+								<th>
+									Tag
+								</th>
+								<th>
+									Alternative
+								</th>
+							</thead>
+							<tbody>
+								<tr>
+									<td>
+										EXIF:InteropIndex
+									</td>
+									<td>
+										EXIF:0x0001
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	<?php }
+		
+	///////////////////////////////////
+    // Options callbacks
+    ///////////////////////////////////
+    
+    /**
+	 * General callback for media form fields
+	 */
+	private function cb( $key ) { ?>
+		<?php $options = get_option( $this->prefix ); ?>
+		<div class="ce" contenteditable="true"><?php echo $options[$key]; ?></div>
+		<?php // used textarea because hidden input caused bugs when whitespace got converted to &nbsp; ?>
+		<textarea class="hidden-input" id="<?php echo $this->prefix; ?>[<?php echo $key; ?>]" name="<?php echo $this->prefix; ?>[<?php echo $key; ?>]"><?php echo $options[$key]; ?></textarea>
+	<?php }
+	
+	public function title_cb() { $this->cb( 'title' ); }
+	
+	public function alt_cb() { $this->cb( 'alt' ); }
+	
+	public function caption_cb() { $this->cb( 'caption' ); }
+	
+	public function description_cb() { $this->cb( 'description' ); }
+	
+	public function sanitizator( $input ) {
+				
+		$output = array();
+		
+		// iterate through options array
+		foreach ( $input as $key => $value ) {
+			
+			if ( is_array( $value ) ) {
+				// if is array iterate over it...
+				
+				$output[$key] = array();
+				foreach ( $value as $k => $v ) {
+					// ...and sanitize both key and value
+					$output[$key][esc_attr( $k )] = esc_attr( $v );
+				}
+				
+			} else {
+				// sanitize value
+				$output[$key] = esc_attr( $value );
+			}
+		}
+		return $output;
+	}
 }
+
+// instantiate the plugin
+$image_metadata_cruncher_plugin = new Image_Metadata_Cruncher_Plugin();
 
 ?>

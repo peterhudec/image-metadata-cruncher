@@ -1,8 +1,9 @@
 /**
- * @author Peto
+ * @author Peter Hudec
  */
 
 jQuery(document).ready(function($) {
+	var prefix = 'image_metadata_cruncher';
 	
 	// table with custom metadata templates
 	var $customMeta = $('#custom-meta-list');
@@ -36,18 +37,11 @@ jQuery(document).ready(function($) {
 	$customMeta.delegate('input.name', 'keyup', function(event) {
 			$name = $(event.target)
 			var $row = getRow($name);
-			var $template = $row.find('td:nth-child(2) > input');
+			var $template = $row.find('td:nth-child(2) > .hidden-input');
 			
+			// validate
 			var value = $name.val();
-			// validate name
-			// if (value.match(/^[^\s]+$/)) {
-				// $name.removeClass('error');
-				// // update name attribute of template input field
-				// $template.attr('name', 'mc[custom_meta]['+ value +']');
-			// } else{
-				// $name.addClass('error');
-			// };
-			$template.attr('name', 'mc[custom_meta]['+ value +']');
+			$template.attr('name', prefix + '[custom_meta]['+ value +']');
 		})
 	
 	function getRow($element) {
@@ -60,14 +54,258 @@ jQuery(document).ready(function($) {
 		// create cells
 		
 		// on keyup changes name attr of $template
-		var $name = $('<input type=text class="name" />');		
-		var $template = $('<input type=text class="template" />'); // this field will be saved upon submit
+		var $name = $('<input type="text" class="name" />');
+		var $ce = $('<div class="ce" contenteditable="true"></div>');
+		//var $template = $('<input type="hidden" class="hidden-input template" />'); // this field will be saved upon submit
+		var $template = $('<textarea class="hidden-input template"></textarea>'); // this field will be saved upon submit
 		var $remove = $('<button class="button">Remove</button>');
 		
 		// create row
-		var $row = $('<tr>').append($('<td>').append($name), $('<td>').append($template), $('<td>').append($remove));
+		var $row = $('<tr>').append($('<td>').append($name), $('<td>').append($ce, $template), $('<td>').append($remove));
 			
 		$customMeta.append($row);
 	});
+	
+	///////////////////////////////////////////
+	// Tag syntax highlighting
+	///////////////////////////////////////////
+	
+	// events
+	$('#metadata-cruncher').delegate('.ce', 'keyup', function(event) {
+		var $target = $(event.target);
+		var text = highlight(event);
+		$out = $target.parent().children('.hidden-input');
+		$out.html(text);
+		
+		// find and replace all &nbsp; entities which break functionality
+		$out.html($out.html().replace(/&nbsp;/g, ' '));
+	})
+	
+	rangy.addInitListener(function(r){
+		// triger the keyup event on content editable elements when rangy is ready
+		$('#metadata-cruncher .ce').keyup();
+	});
+	
+	$('#submit').click(function() {
+		// before submitting make sure, that all textareas are properly filled out
+		$('#metadata-cruncher .ce').keyup();
+	});
+	
+	function wrap(value, className){
+	    if(value) {
+	        return '<span class="' + className + '">' + value + '</span>';
+	    }
+	}
+	
+	function addToResult(result, value, className){
+	    if(value){
+	    	if(className){
+	    		result += wrap(value, className);
+	    	}else{
+	    		result += value;
+	    	}
+	    }
+	    return result;
+	}
+	
+	function re() {
+		return RegExp(Array.prototype.join.call(arguments, ''), 'g');
+	}
+	
+	function safeKeystroke(event){
+		
+		var unsafeShiftKeys = [
+			16, // shift
+			33, // page up
+			34, // page down
+			35, // end
+			36, // home
+			37, // left
+			38, // up
+			39, // right
+			40  // down
+		];
+		
+		var unsafeCtrlKeys = [
+			17, // ctrl
+			67, // c
+			65, // a
+			89  // y
+		];
+		
+		var shiftDanger = event.shiftKey && jQuery.inArray(event.which, unsafeShiftKeys) > -1;
+		var ctrlDanger = event.ctrlKey && jQuery.inArray(event.which, unsafeCtrlKeys) > -1;
+		var tabDanger = event.which == 9;
+				
+		var safe = !shiftDanger && !ctrlDanger && !tabDanger;
+		
+		if(safe){
+			return true;
+		}else{
+			return false;
+		}
+	}
+	
+	function highlight(event) {	
+		if(safeKeystroke(event)){
+			// do highlighting
+			var $ = jQuery;
+			
+			
+			var $in = $(event.target);
+			
+			var selection = rangy.saveSelection();
+			
+			// replace rangy boundary markers with ▨ and save them to temporary array
+			var p = /(<span[\s]*id="selectionBoundary[^<>]*>[^<>]*<\/[\s]*span>)/g;
+			var markers = [];
+			var html = $in.html().replace(p, function(match){
+		        // store found marker...
+		        markers.push(match);
+		        // ...and replace with identifier
+		        return '▨';
+		   });
+		   // put it back to input
+		   $in.html(html);
+		   
+		   // extract text and add markup
+		   var newHTML = applyMarkup($in.text());   
+		   
+		   // restore rangy identifiers
+		   newHTML = newHTML.replace('▨', function(match){
+		        // retrieve from temp storage
+		        return markers.shift();
+		   });
+		   
+		   // update input html
+		   $in.html(newHTML);
+		   
+		   // restore rangy selection
+		   rangy.restoreSelection(selection);
+		   
+		   return $in.text();
+		}
+	}
+	
+	function applyMarkup(input) {
+		var p = re(
+			'({)',
+			//'([^}]*)',
+			'([\\s▨]*',
+			'(?:[\\w:.>▨]{2,}|[^▨\\s]{1})',
+			'(?:[\\s▨]*\\|[\\s▨]*(?:[\\w:.>▨]{2,}|[^▨\\s]{1}))*',
+			'[\\s▨]*',
+			'(?:[\\?][\\s▨]*"[^"]*")?',
+			'[\\s▨]*',
+			'(?::[\\s▨]*"[^"]*")?',
+			'[\\s▨]*)',
+			'(})'
+		)
+		return input.replace(p, function(m, opening, content, closing) {
+			var result = '';
+			result = addToResult(result, opening, 'opening bracket');
+			result = addToResult(result, processTagContent(content), 'content');
+			result = addToResult(result, closing, 'closing bracket');
+			return wrap(result, 'tag group');
+		});
+	}
+	
+	function processTagContent(content) {
+		p = re(
+			'([\\s▨]*)', // space1
+			
+			 // keys
+            '(',
+            '(?:[\\w:.>▨]{2,}|[^▨\\s]{1})', // must contain at least one character
+            '(?:',
+            '[\\s▨]*\\|[\\s▨]*(?:[\\w:.>▨]{2,}|[^▨\\s]{1})', // zero or more ( | abcd ) groups
+            ')*',
+            ')',
+            
+            '([\\s▨]*)', // space2
+            
+            // default
+            '(?:',
+            '([\\?][\\s▨]*)', // questionmark
+            '("[^"]*")', // default value
+            ')?',
+            
+            '([\\s▨]*)', // space3
+            
+            // delimiter
+            '(?:',
+            '(:[\\s▨]*)', // colon
+            '("[^"]*")', // delimiter
+            ')?',
+            
+			'([\\s▨]*)' // space4
+		);
+		return content.replace(p, function(
+			m,
+			space1,
+			keys,
+			space2,
+			qm,
+			def,
+			space3,
+			colon,
+			delimiter,
+			space4
+		) {
+			var result = '';
+			result = addToResult(result, space1);
+			result = addToResult(result, processKeys(keys), 'keys group');
+			result = addToResult(result, space2);
+			result = addToResult(
+				result,
+				wrap(qm, 'identifier') + wrap(def, 'value'),
+				'default group'
+			);
+			result = addToResult(result, space3);
+			result = addToResult(
+				result,
+				wrap(colon, 'identifier') + wrap(delimiter, 'value'),
+				'delimiter group'
+			);
+			result = addToResult(result, space4);
+			return result;
+		});
+	}
+	
+	function processKeys(content) {
+		var p = re(
+			'([^:\\s]+)', // prefix
+            '(?:',
+            '(:)', // colon
+            '([^|\\s]+)', // key
+            ')?',
+            '([\\s▨]*\\|)?' // pipe
+		);
+		return content.replace(p, function(m, prefix, colon, key, pipe){
+			var result = '';
+			result = addToResult(result, prefix, 'prefix');
+			result = addToResult(result, colon, 'colon');
+			result = addToResult(result, processKey(key), 'key');
+			result = addToResult(result, pipe, 'pipe');
+			return result;
+		});
+	}
+	
+	function processKey(content) {
+		var p = re(
+			'([^>\\s]+)', // key
+            '(>)?' // gt
+		);
+		if(content){
+			return content.replace(p, function(m, part, gt){
+				var result = '';
+				result = addToResult(result, part, 'part');
+				result = addToResult(result, gt, 'gt');
+				return result;
+			});
+		}
+	}
+	
+	
 });
 

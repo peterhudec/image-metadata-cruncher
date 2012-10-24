@@ -2,15 +2,91 @@ input[type="text"] {
 	width: 100%;
 }
 
-.to-be-removed{
+.to-be-removed {
 	background-color: red
 }
 
-.error{
+.error {
 	background-color: red !important
 }
 
-#custom-meta-list{
+#custom-meta-list {
 	margin-top: 10px;
 	margin-bottom: 10px
 }
+
+.hidden-input {
+	display: none;
+	visibility: hidden;
+	height: 0px;
+	line-height: 0px;
+}
+
+#metadata-cruncher .ce {
+	border: 1px solid #DFDFDF;
+	border-radius: 3px;
+	background-color: white;
+	margin: 1px;
+	padding: 3px;
+	outline: 0;
+	line-height: 20px;
+	font-weight: bold;
+}
+
+#metadata-cruncher .ce:focus {border-color: #BBB}
+
+/* syntax highlighting */
+
+#metadata-cruncher .tag.group {
+	padding: 4px;
+    border-radius: 6px;
+	background-color: #424242;
+	background-color: #e6e0d7;
+    color: #DDDDDD;
+    color: #5e5e5e;
+    font-family: monospace;
+    font-weight: bold;
+}
+
+#metadata-cruncher .group .group {
+    padding: 2px;
+    border-radius: 3px;
+    background-color: #565656;
+    background-color: #faf5ed;
+}
+
+#metadata-cruncher .bracket {
+	/*
+	font-size: 1.4em;
+    vertical-align: -0.1em;
+    line-height: 0.5em
+    */
+}
+
+/* keys */
+#metadata-cruncher .keys .prefix {color: #53c7fe}
+#metadata-cruncher .keys .colon {color: #4ea2cf}
+#metadata-cruncher .keys .key .part {color: #94D300}
+#metadata-cruncher .keys .key .gt {color: #6f9f00}
+
+/* default */
+#metadata-cruncher .default .identifier {color: #FFD162}
+#metadata-cruncher .default .value {color: #F1AA00}
+
+/* default */
+#metadata-cruncher .delimiter .identifier {color: #FF6BAC}
+#metadata-cruncher .delimiter .value {color: #ec428c}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
