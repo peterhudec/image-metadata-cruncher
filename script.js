@@ -189,22 +189,52 @@ jQuery(document).ready(function($) {
 	
 	function applyMarkup(input) {
 		var p = re(
-			'({)',
+			'({)', // 1 opening bracket
 			//'([^}]*)',
-			'([\\s▨]*',
+			'(', // 2 content
+			'[\\s▨]*', // space
 			'(?:[\\w:.>▨]{2,}|[^▨\\s]{1})',
 			'(?:[\\s▨]*\\|[\\s▨]*(?:[\\w:.>▨]{2,}|[^▨\\s]{1}))*',
 			'[\\s▨]*',
-			'(?:[\\?][\\s▨]*"[^"]*")?',
+			//'(?:@[\\s▨]*"[^"]*")?',
+			
+			'(?:',
+			'@',
 			'[\\s▨]*',
-			'(?::[\\s▨]*"[^"]*")?',
+			///"(?:(?:\\▨|\\)?.)*?"/.source,
+			/"(?:(?:\\▨|\\)?.)*?"/.source,
+			')?',
+			
+			'[\\s▨]*',
+			'(?:',
+			'[\\?]',
+			'[\\s▨]*',
+			/"(?:(?:\\▨|\\)?.)*?"/.source,
+			')?',
+			
+			'[\\s▨]*',
+			'(?:',
+			':',
+			'[\\s▨]*',
+			/"(?:(?:\\▨|\\)?.)*?"/.source,
+			')?',
+			
 			'[\\s▨]*)',
-			'(})'
+			'(})' // 4
 		)
-		return input.replace(p, function(m, opening, content, closing) {
+		
+		return input.replace(p, function(
+				m,
+				opening,
+				content,
+				//quotes,
+				closing
+			) {
+			console.log(m);
 			var result = '';
 			result = addToResult(result, opening, 'opening bracket');
 			result = addToResult(result, processTagContent(content), 'content');
+			//result = addToResult(result, quotes);
 			result = addToResult(result, closing, 'closing bracket');
 			return wrap(result, 'tag group');
 		});
@@ -212,9 +242,9 @@ jQuery(document).ready(function($) {
 	
 	function processTagContent(content) {
 		p = re(
-			'([\\s▨]*)', // space1
+			'([\\s▨]*)', // 1 space1
 			
-			 // keys
+			 // 2 keys
             '(',
             '(?:[\\w:.>▨]{2,}|[^▨\\s]{1})', // must contain at least one character
             '(?:',
@@ -222,35 +252,48 @@ jQuery(document).ready(function($) {
             ')*',
             ')',
             
-            '([\\s▨]*)', // space2
+            '([\\s▨]*)', // 3 space2
             
-            // default
+            // success
             '(?:',
-            '([\\?][\\s▨]*)', // questionmark
-            '("[^"]*")', // default value
+            '(@[\\s▨]*)', // 4 at
+            /("(?:(?:\\▨|\\)?.)*?")/.source,
+            //'("[^"]*")', // success value
             ')?',
             
             '([\\s▨]*)', // space3
             
+            // default
+            '(?:',
+            '([\\?][\\s▨]*)', // questionmark
+            /("(?:(?:\\▨|\\)?.)*?")/.source, // default value
+            ')?',
+            
+            '([\\s▨]*)', // space4
+            
             // delimiter
             '(?:',
             '(:[\\s▨]*)', // colon
-            '("[^"]*")', // delimiter
+            /("(?:(?:\\▨|\\)?.)*?")/.source, // delimiter
             ')?',
             
-			'([\\s▨]*)' // space4
+			'([\\s▨]*)' // space5
 		);
 		return content.replace(p, function(
 			m,
 			space1,
 			keys,
 			space2,
+			at,
+			success,
+			//quotes1,
+			space3,
 			qm,
 			def,
-			space3,
+			space4,
 			colon,
 			delimiter,
-			space4
+			space5
 		) {
 			var result = '';
 			result = addToResult(result, space1);
@@ -258,16 +301,23 @@ jQuery(document).ready(function($) {
 			result = addToResult(result, space2);
 			result = addToResult(
 				result,
+				wrap(at, 'identifier') + wrap(success, 'value'),
+				'success group'
+			);
+			//result = addToResult(result, quotes1);
+			result = addToResult(result, space3);
+			result = addToResult(
+				result,
 				wrap(qm, 'identifier') + wrap(def, 'value'),
 				'default group'
 			);
-			result = addToResult(result, space3);
+			result = addToResult(result, space4);
 			result = addToResult(
 				result,
 				wrap(colon, 'identifier') + wrap(delimiter, 'value'),
 				'delimiter group'
 			);
-			result = addToResult(result, space4);
+			result = addToResult(result, space5);
 			return result;
 		});
 	}

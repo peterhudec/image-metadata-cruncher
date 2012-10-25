@@ -69,6 +69,10 @@ input[type="text"] {
 #metadata-cruncher .keys .key .part {color: #94D300}
 #metadata-cruncher .keys .key .gt {color: #6f9f00}
 
+/* success */
+#metadata-cruncher .success .identifier {color: #94cd3b}
+#metadata-cruncher .success .value {color: #618800}
+
 /* default */
 #metadata-cruncher .default .identifier {color: #FFD162}
 #metadata-cruncher .default .value {color: #F1AA00}
