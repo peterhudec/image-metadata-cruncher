@@ -188,6 +188,30 @@ jQuery(document).ready(function($) {
 	}
 	
 	function applyMarkup(input) {
+		// sequence of word characters including period "." and hash "#"
+		//  with min lenght of 1 and proper handling of "▨" cursor character
+		var wordPattern = /(?:[\w.#▨]{2,}|[^▨\s]{1})/.source;
+		
+		var keywordPattern = re(
+			wordPattern, // must begin with category prefix
+			':', // followed by colon
+			wordPattern, // followed by at least one part
+			'(?:', // followed by optional subparts (>part)
+				'>', // starting with gt
+				wordPattern, // and ending with word
+			')*'
+		).source;
+		
+		var keywordsPattern = re(
+			keywordPattern, // must begin with at least one keyword
+			'(?:', // followed by zero or more groups of ( | keyword)
+				'[\\s▨]*', // optional space
+				'\\|', // must begin with pipe
+				'[\\s▨]*', // optional space
+				keywordPattern, // keyword
+			')*'
+		).source;
+		
 		var quotesPattern = re(
 			'(', // capture begin
 				'"', // must begin with doublequote
@@ -198,38 +222,36 @@ jQuery(document).ready(function($) {
 		            ')*', // zero or more times
 	            '"', // must end with doublequote
             ')' // capture end
-		);
+		).source;
+		
 		var p = re(
 			'({)', // (1) opening bracket
 			
 			'([\\s▨]*)', // (2) space1
 			
-            '(', // (3) begin keywords
-	            '(?:[\\w:.>▨]{2,}|[^▨\\s]{1})', // must contain at least one character
-	            '(?:',
-	            	'[\\s▨]*\\|[\\s▨]*(?:[\\w:.>▨]{2,}|[^▨\\s]{1})', // zero or more ( | abcd ) groups
-	            ')*',
-            ')', // end keywords
+            '(', // (3) keywords
+            	keywordsPattern,
+            ')',
             
             '([\\s▨]*)', // (4) space2
 			
             '(?:', // begin success group
 	            '(@[\\s▨]*)', // (5) success identifier "@"
-	            quotesPattern.source, // (6) success value
+	            quotesPattern, // (6) success value
             ')?', // end success group
             
             '([\\s▨]*)', // (7) space3
             
             '(?:', // begin default group
 	            '(%[\\s▨]*)', // (8) default identifier "?"
-	            quotesPattern.source, // (9) default value
+	            quotesPattern, // (9) default value
             ')?', // end default group
             
             '([\\s▨]*)', // (10) space4
             
             '(?:', // begin delimiter group
 	            '(#[\\s▨]*)', // (11) delimiter identifier ":"
-	            quotesPattern.source, // (12) delimiter value
+	            quotesPattern, // (12) delimiter value
             ')?', // end delimiter group
             
 			'([\\s▨]*)', // (13) space5
