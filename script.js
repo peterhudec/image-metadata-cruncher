@@ -188,10 +188,12 @@ jQuery(document).ready(function($) {
 	}
 	
 	function applyMarkup(input) {
-		// sequence of word characters including period "." and hash "#"
+		
+		// matches sequence of word characters including period "." and hash "#"
 		//  with min lenght of 1 and proper handling of "▨" cursor character
 		var wordPattern = /(?:[\w.#▨]{2,}|[^▨\s]{1})/.source;
 		
+		// matches keyword in form of "abc:def(>ijk)*"
 		var keywordPattern = re(
 			wordPattern, // must begin with category prefix
 			':', // followed by colon
@@ -202,6 +204,7 @@ jQuery(document).ready(function($) {
 			')*'
 		).source;
 		
+		// matches set of keywords delimited by pipe character but not with a trailng pipe
 		var keywordsPattern = re(
 			keywordPattern, // must begin with at least one keyword
 			'(?:', // followed by zero or more groups of ( | keyword)
@@ -212,6 +215,14 @@ jQuery(document).ready(function($) {
 			')*'
 		).source;
 		
+		// matches and captures sequence of characters beginning and ending with doublequotes
+		// respecting doublequote escaped by backslash between beginning and ending quote
+		// e.g.
+		//	matches: 
+		//		"def"		in abc"def"ijk
+		//		"def\"ijk"	in abc"def\"ijk"lmn
+		//		"def\"		in abc"def\"ijk
+		//		"def"		in abc"def"ijk"lmn
 		var quotesPattern = re(
 			'(', // capture begin
 				'"', // must begin with doublequote
@@ -224,6 +235,9 @@ jQuery(document).ready(function($) {
             ')' // capture end
 		).source;
 		
+		// matches whole tag, captures opening and closing brackets, keywords,
+		// identifier and value of success, default and delimiter groups
+		// and spaces between them
 		var p = re(
 			'({)', // (1) opening bracket
 			
@@ -276,7 +290,10 @@ jQuery(document).ready(function($) {
 				space5, // (13)
 				closingBracket // (14)
 			) {
-			console.log(m);
+			
+			//console.log(m);
+			
+			// put captured groups back together in order they were captured
 			var result = '';
 			result = addToResult(result, openingBracket, 'opening bracket');
 			result = addToResult(result, space1);
@@ -306,6 +323,8 @@ jQuery(document).ready(function($) {
 	}
 	
 	function processKeys(content) {
+		
+		// matches keys, captures prefix, colon, key and pipe
 		var p = re(
 			'([^:\\s]+)', // prefix
             '(?:',
@@ -314,7 +333,9 @@ jQuery(document).ready(function($) {
             ')?',
             '([\\s▨]*\\|)?' // pipe
 		);
+		
 		return content.replace(p, function(m, prefix, colon, key, pipe){
+			// put it back together in captured order
 			var result = '';
 			result = addToResult(result, prefix, 'prefix');
 			result = addToResult(result, colon, 'colon');
@@ -325,20 +346,22 @@ jQuery(document).ready(function($) {
 	}
 	
 	function processKey(content) {
+		
+		// matches key suffix, captures part and qt character
 		var p = re(
 			'([^>\\s]+)', // key
             '(>)?' // gt
 		);
+		
 		if(content){
 			return content.replace(p, function(m, part, gt){
+				// put it back together in captured order
 				var result = '';
 				result = addToResult(result, part, 'part');
 				result = addToResult(result, gt, 'gt');
 				return result;
 			});
 		}
-	}
-	
-	
+	}	
 });
 
