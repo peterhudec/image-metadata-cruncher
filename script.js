@@ -189,136 +189,86 @@ jQuery(document).ready(function($) {
 	
 	function applyMarkup(input) {
 		var p = re(
-			'({)', // 1 opening bracket
-			//'([^}]*)',
-			'(', // 2 content
-			'[\\s▨]*', // space
-			'(?:[\\w:.>▨]{2,}|[^▨\\s]{1})',
-			'(?:[\\s▨]*\\|[\\s▨]*(?:[\\w:.>▨]{2,}|[^▨\\s]{1}))*',
-			'[\\s▨]*',
-			//'(?:@[\\s▨]*"[^"]*")?',
+			'({)', // (1) opening bracket
 			
-			'(?:',
-			'@',
-			'[\\s▨]*',
-			///"(?:(?:\\▨|\\)?.)*?"/.source,
-			/"(?:(?:\\▨|\\)?.)*?"/.source,
-			')?',
+			'([\\s▨]*)', // (2) space1
 			
-			'[\\s▨]*',
-			'(?:',
-			'[\\?]',
-			'[\\s▨]*',
-			/"(?:(?:\\▨|\\)?.)*?"/.source,
-			')?',
-			
-			'[\\s▨]*',
-			'(?:',
-			':',
-			'[\\s▨]*',
-			/"(?:(?:\\▨|\\)?.)*?"/.source,
-			')?',
-			
-			'[\\s▨]*)',
-			'(})' // 4
-		)
-		
-		return input.replace(p, function(
-				m,
-				opening,
-				content,
-				//quotes,
-				closing
-			) {
-			console.log(m);
-			var result = '';
-			result = addToResult(result, opening, 'opening bracket');
-			result = addToResult(result, processTagContent(content), 'content');
-			//result = addToResult(result, quotes);
-			result = addToResult(result, closing, 'closing bracket');
-			return wrap(result, 'tag group');
-		});
-	}
-	
-	function processTagContent(content) {
-		p = re(
-			'([\\s▨]*)', // 1 space1
-			
-			 // 2 keys
-            '(',
+            '(', // (3) begin keywords
             '(?:[\\w:.>▨]{2,}|[^▨\\s]{1})', // must contain at least one character
             '(?:',
             '[\\s▨]*\\|[\\s▨]*(?:[\\w:.>▨]{2,}|[^▨\\s]{1})', // zero or more ( | abcd ) groups
             ')*',
-            ')',
+            ')', // end keywords
             
-            '([\\s▨]*)', // 3 space2
+            '([\\s▨]*)', // (4) space2
+			
+            '(?:', // begin success group
+            '(@[\\s▨]*)', // (5) success identifier "@"
+            /("(?:(?:\\▨|\\)?.)*?")/.source, // (6) success value
+            ')?', // end success group
             
-            // success
-            '(?:',
-            '(@[\\s▨]*)', // 4 at
-            /("(?:(?:\\▨|\\)?.)*?")/.source,
-            //'("[^"]*")', // success value
-            ')?',
+            '([\\s▨]*)', // (7) space3
             
-            '([\\s▨]*)', // space3
+            '(?:', // begin default group
+            '([\\?][\\s▨]*)', // (8) default identifier "?"
+            /("(?:(?:\\▨|\\)?.)*?")/.source, // (9) default value
+            ')?', // end default group
             
-            // default
-            '(?:',
-            '([\\?][\\s▨]*)', // questionmark
-            /("(?:(?:\\▨|\\)?.)*?")/.source, // default value
-            ')?',
+            '([\\s▨]*)', // (10) space4
             
-            '([\\s▨]*)', // space4
+            '(?:', // begin delimiter group
+            '(:[\\s▨]*)', // (11) delimiter identifier ":"
+            /("(?:(?:\\▨|\\)?.)*?")/.source, // (12) delimiter value
+            ')?', // end delimiter group
             
-            // delimiter
-            '(?:',
-            '(:[\\s▨]*)', // colon
-            /("(?:(?:\\▨|\\)?.)*?")/.source, // delimiter
-            ')?',
-            
-			'([\\s▨]*)' // space5
-		);
-		return content.replace(p, function(
-			m,
-			space1,
-			keys,
-			space2,
-			at,
-			success,
-			//quotes1,
-			space3,
-			qm,
-			def,
-			space4,
-			colon,
-			delimiter,
-			space5
-		) {
+			'([\\s▨]*)', // (13) space5
+			
+			'(})' // (14) closing bracket
+		)
+		
+		return input.replace(p, function(
+				m,
+				openingBracket, // (1)
+				space1, // (2)
+				keywords, // (3)
+				space2, // (4)
+				successIdentifier, // (5)
+				successValue, // (6)
+				space3, // (7)
+				defaultIdentifier, // (8)
+				defaultValue, // (9)
+				space4, // (10)
+				delimiterIdentifier, // (11)
+				delimiterValue, // (12)
+				space5, // (13)
+				closingBracket // (14)
+			) {
+			console.log(m);
 			var result = '';
+			result = addToResult(result, openingBracket, 'opening bracket');
 			result = addToResult(result, space1);
-			result = addToResult(result, processKeys(keys), 'keys group');
+			result = addToResult(result, processKeys(keywords), 'keys group');
 			result = addToResult(result, space2);
 			result = addToResult(
 				result,
-				wrap(at, 'identifier') + wrap(success, 'value'),
+				wrap(successIdentifier, 'identifier') + wrap(successValue, 'value'),
 				'success group'
 			);
-			//result = addToResult(result, quotes1);
 			result = addToResult(result, space3);
 			result = addToResult(
 				result,
-				wrap(qm, 'identifier') + wrap(def, 'value'),
+				wrap(defaultIdentifier, 'identifier') + wrap(defaultValue, 'value'),
 				'default group'
 			);
 			result = addToResult(result, space4);
 			result = addToResult(
 				result,
-				wrap(colon, 'identifier') + wrap(delimiter, 'value'),
+				wrap(delimiterIdentifier, 'identifier') + wrap(delimiterValue, 'value'),
 				'delimiter group'
 			);
 			result = addToResult(result, space5);
-			return result;
+			result = addToResult(result, closingBracket, 'closing bracket');
+			return wrap(result, 'tag group');
 		});
 	}
 	
