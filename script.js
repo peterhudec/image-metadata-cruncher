@@ -188,37 +188,48 @@ jQuery(document).ready(function($) {
 	}
 	
 	function applyMarkup(input) {
+		var quotesPattern = re(
+			'(', // capture begin
+				'"', // must begin with doublequote
+		            '(?:',
+			            '[^"]', // any non doublequote character...
+			            '|', // or...
+			            '\\\\▨?"', // escaped doublequote with optional cursor identifier
+		            ')*', // zero or more times
+	            '"', // must end with doublequote
+            ')' // capture end
+		);
 		var p = re(
 			'({)', // (1) opening bracket
 			
 			'([\\s▨]*)', // (2) space1
 			
             '(', // (3) begin keywords
-            '(?:[\\w:.>▨]{2,}|[^▨\\s]{1})', // must contain at least one character
-            '(?:',
-            '[\\s▨]*\\|[\\s▨]*(?:[\\w:.>▨]{2,}|[^▨\\s]{1})', // zero or more ( | abcd ) groups
-            ')*',
+	            '(?:[\\w:.>▨]{2,}|[^▨\\s]{1})', // must contain at least one character
+	            '(?:',
+	            	'[\\s▨]*\\|[\\s▨]*(?:[\\w:.>▨]{2,}|[^▨\\s]{1})', // zero or more ( | abcd ) groups
+	            ')*',
             ')', // end keywords
             
             '([\\s▨]*)', // (4) space2
 			
             '(?:', // begin success group
-            '(@[\\s▨]*)', // (5) success identifier "@"
-            /("(?:(?:\\▨|\\)?.)*?")/.source, // (6) success value
+	            '(@[\\s▨]*)', // (5) success identifier "@"
+	            quotesPattern.source, // (6) success value
             ')?', // end success group
             
             '([\\s▨]*)', // (7) space3
             
             '(?:', // begin default group
-            '([\\?][\\s▨]*)', // (8) default identifier "?"
-            /("(?:(?:\\▨|\\)?.)*?")/.source, // (9) default value
+	            '(%[\\s▨]*)', // (8) default identifier "?"
+	            quotesPattern.source, // (9) default value
             ')?', // end default group
             
             '([\\s▨]*)', // (10) space4
             
             '(?:', // begin delimiter group
-            '(:[\\s▨]*)', // (11) delimiter identifier ":"
-            /("(?:(?:\\▨|\\)?.)*?")/.source, // (12) delimiter value
+	            '(#[\\s▨]*)', // (11) delimiter identifier ":"
+	            quotesPattern.source, // (12) delimiter value
             ')?', // end delimiter group
             
 			'([\\s▨]*)', // (13) space5
