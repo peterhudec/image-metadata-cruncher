@@ -19,11 +19,17 @@ class Image_Metadata_Cruncher_Plugin {
 	
 	// stores metadata between wp_handle_upload_prefilter and add_attachment hooks
 	private $metadata;
-	
+	private $keyword;
+	private $keywords;
+	private $pattern;
+		
 	/**
 	 * Constructor
 	 */
 	function __construct() {
+		
+		$this->patterns();
+		
 		// hooks
 		
 		// plugin settings hooks
@@ -116,11 +122,23 @@ class Image_Metadata_Cruncher_Plugin {
 	 */
 	private function render_template( $template ){
 		
-		// regex pattern for tags
-	    $pattern = '/{([^}]*)}/';
-	    
+		// restore escaped characters
+		$template = str_replace( 
+			array(
+				'&gt;',
+				'&#039;',
+				'&quot;'
+			),
+			array(
+				'>',
+				"'",
+				'"'
+			),
+			$template
+		);
+		
 		// replace each found tag with result of the replace_parse_tag method
-		$res = preg_replace_callback($pattern, array($this, 'replace_parse_tag'), $template);
+		$res = preg_replace_callback($this->pattern, array($this, 'parse_tag'), $template);
 		
 	    $res = $res ? $res : $template;    
 	        
@@ -128,14 +146,6 @@ class Image_Metadata_Cruncher_Plugin {
 		$res = str_replace(array('\{', '\}'), array('{', '}'), $res);
 		
 		return $res;
-	}
-	
-	/**
-	 * callback for replacing tags found in template
-	 */
-	private function replace_parse_tag( $match ) {
-		// parse and return found tag
-		return $this->parse_tag( $match[1] );
 	}
 	
 	/**
@@ -167,7 +177,7 @@ class Image_Metadata_Cruncher_Plugin {
 	private function get_meta_by_key( $key, $delimiter = NULL ){
 		global $IPTC_MAPPING, $EXIF_MAPPING;
 		
-		// convert metadata keys to lowercase to allow case insensitive keys
+		// convert metadata keys to lowercase to allow for case insensitive keys
 		$metadata = $this->array_keys_to_lower_recursive( $this->metadata );
 		
 		if ( ! $delimiter ) {
@@ -223,21 +233,26 @@ class Image_Metadata_Cruncher_Plugin {
 			// if nothing found search for IPTC by code e.g. "IPTC:2#025"...
 			if( !$key ) {
 				
-				// ...but first normalize the IPTC code
 				if ( count( $path ) == 1 ) {
+						
+					// if IPTC part is in n#nnn form this will get its value if set
+					$value = $this->get_metadata( $metadata, $category, $path[0] );
 					
-					// if only one number specified, fall back to "[n]#000" e.g. "IPTC:1" becomes "IPTC:1#000"
-					$key = sprintf("%d#000", $path[0]);
+					// if nothing found check the n>nnn form
+					if( ! $value ) {
+						// if only one number specified, fallback to "[n]#000" e.g. "IPTC:1" becomes "IPTC:1#000"
+						$key = sprintf("%d#000", $path[0]);
+						$value = $this->get_metadata( $metadata, $category, $key );
+					}
+					
 				} else {
 					
 					// else pad leading zeros if missing e.g. "IPTC:2.5" becomes "IPTC:2#005"
 					$key = sprintf("%d#%03d", $path[0], $path[1]);
+					$value = $this->get_metadata( $metadata, $category, $key );
 				}
 				
 			}
-			
-			// now that we have a key search for it in the extracted metadata
-			$value = $this->get_metadata( $metadata, $category, $key );
 				
 		} elseif ( $category == 'exif' ) {
 			// if key starts with "EXIF" e.g. {EXIF:whatever.whateverelse}
@@ -308,90 +323,131 @@ class Image_Metadata_Cruncher_Plugin {
 		return $value;
 	}
 	
+	
+	private function validate_tag ( $tag, $pattern ) {
+		preg_match( $pattern, $tag, $match );
+		if ( isset( $match[0] ) ) {
+			return $match[0];
+		}
+	}
+	
+	private function u($value='')
+	{
+		
+	}
+	
 	/**
 	 * Gets the tag contents without curly braces e.g. 'IPTC:Caption | EXIF:Model ? "default" : "delimiter"'
 	 * parses the tag and returns the value of the first succesful key or the specified default string
 	 * if the found value is an array it returns its values joined with the specified delimiter
 	 */
-	private function parse_tag( $tag ) {
+	private function parse_tag( $match ) {
 		
-		$pred = ($tag == "iptc:caption&gt;bla?&quot;ok&quot;");
-		
-		// restore escaped characters
-		// &gt;		to >
-		// &#039;	to '
-		// &quot;	to "
-		$tag = str_replace( 
-			array(
-				'&gt;',
-				'&#039;',
-				'&quot;'
-			),
-			array(
-				'>',
-				"'",
-				'"'
-			),
-			$tag
-		);
-		
-		$po = ($tag == 'iptc:caption>bla?"ok"');
-		
-		// regex pattern captures 3 groups KEYWORDS, DEFAULT and DELIMITER
-		$pattern = '/
-	    (?:
-	        (?:
-	            ^ | \|                  # leading pipe (|) or beginning of string = KEYWORD
-	        )
-	        \s*                         # allow whitespace
-	        (?P<keywords> [\w:.>]+ )    # capture KEYWORDS
-	        \s*                         # allow whitespace
-	    )
-	    (?:
-	        \?                          # leading question mark (?) = DEFAULT
-	        \s*                         # allow whitespace
-	        ["\']                       # require double or single quote
-	        (?P<default> [^"\']+ )      # capture DEFAULT
-	        ["\']                       # require double or single quote
-	        \s*                         # allow whitespace
-	    )?
-	    (?:
-	        :                           # leading colon (:) = DELIMITER
-	        \s*                         # allow whitespace
-	        ["\']                       # require double or single quote
-	        (?P<delimiter> [^"\']+ )    # capture DELIMITER
-	        ["\']                       # require double or single quote
-	        \s*                         # allow whitespace
-	    )?
-	    /x';
-	    
-		// execute match
-	    $m = preg_match_all( $pattern, $tag, $match );
-	    
-		// extract only keys with value
-	    $keywords = array_filter( $match[ 'keywords' ] );
-		$default = array_pop( array_filter( $match[ 'default' ] ) );
-	    $delimiter = array_pop( array_filter( $match[ 'delimiter' ] ) );
-	    		
+		$keywords = isset( $match[ 'keywords' ] ) ? explode('|', $match[ 'keywords' ] ) : FALSE;
+		$success = isset( $match[ 'success' ] ) ? $match[ 'success' ] : FALSE;
+		$default = isset( $match[ 'default' ] ) ? $match[ 'default' ] : FALSE;
+		$delimiter = isset( $match[ 'delimiter' ] ) ? $match[ 'delimiter' ] : FALSE;
+			
 	    // loop through keywords...
 	    foreach ( $keywords as $keyword ) {
 	    	
-			// search for key in metadata extracted from the image
-	        $meta = $this->get_meta_by_key( $keyword, $delimiter );
+	    	// search for key in metadata extracted from the image
+	        $meta = $this->get_meta_by_key( trim( $keyword ), $delimiter );
 	        
 	        if( $meta ) {
 	        	// return first found meta
-	            return $meta;
+	        	if ( $success ) {
+	        		return str_replace('$', $meta, $success);
+	        	} else {
+	        		return $meta;
+	        	}
 	        }
 	    }
 		
 		// if flow gets here nothing was found so return default
-		if($default){
+		if ( $default ){
 			return $default;
 		}else{
 			return '';
 		}
 		
+	}
+	
+	
+	private function patterns() {
+		
+		// matches key in form abc:def(>ijk)*
+		$this->keyword = '
+			[\w]+ # caterory prefix
+			: # colon
+			[\w.#]+ # keyword first part
+			(?: # zero or more keyword parts
+				> # part delimiter
+				[\w.#]+ # part
+			)*
+		';
+		
+		// matches keys in form key( | key)*
+		$this->keywords = '
+			'.$this->keyword.' # at least one key
+			(?: # zero or more additional keys
+				\s* # space
+				\| # colon delimiter
+				\s* # space
+				'.$this->keyword.' # key
+			)*
+		';
+		
+		// matches tag in form { keys @ "success" % "default" # "identifier" }
+		$this->pattern = '/
+			{
+			\s*
+			(?P<keywords>'.$this->keywords.')
+			\s*
+			(?: # success
+				@ # identifier
+				\s* # space
+				" # opening quote
+				(?P<success> # capture value
+					(?: # must contain
+						\\\\" # either escaped doublequote \"
+						| # or
+						[^"] # any non doublequote character
+					)* # zero or more times
+				)
+				" # closing quote
+			)?
+			\s*
+			(?: # default
+				% # identifier
+				\s* # space
+				" # opening quote
+				(?P<default> # capture value
+					(?: # must contain
+						\\\\" # either escaped doublequote \"
+						| # or
+						[^"] # any non doublequote character
+					)* # zero or more times
+				)
+				" # closing quote
+			)?
+			\s*
+			(?: # delimiter
+				\# # identifier
+				\s* # space
+				" # opening quote
+				(?P<delimiter> # capture value
+					(?: # must contain
+						\\\\" # either escaped doublequote \"
+						| # or
+						[^"] # any non doublequote character
+					)* # zero or more times
+				)
+				" # closing quote
+			)?
+			\s*
+			}
+		/x';
 	}
 	
 	
