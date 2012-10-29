@@ -63,8 +63,8 @@ input[type="text"] {
 /* keys */
 #metadata-cruncher .keys .prefix {color: #75C1FF}
 #metadata-cruncher .keys .colon {color: #BAE7FF}
-#metadata-cruncher .keys .key .part {color: #9BCF2B}
-#metadata-cruncher .keys .key .gt {color: #BAEB50}
+#metadata-cruncher .keys .key .part {color: #98C720}
+#metadata-cruncher .keys .key .gt {color: #D1F578}
 
 /* success */
 #metadata-cruncher .success .identifier {color: #FFF15C}
