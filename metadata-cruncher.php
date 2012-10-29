@@ -357,7 +357,7 @@ class Image_Metadata_Cruncher_Plugin {
 	        if( $meta ) {
 	        	// return first found meta
 	        	if ( $success ) {
-	        		return str_replace('$', $meta, $success);
+	        		return str_replace(array('$', '\"'), array($meta, '"'), $success);
 	        	} else {
 	        		return $meta;
 	        	}
