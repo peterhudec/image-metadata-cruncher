@@ -40,10 +40,8 @@ input[type="text"] {
 #metadata-cruncher .tag.group {
 	padding: 4px;
     border-radius: 6px;
-	background-color: #424242;
-	background-color: #e6e0d7;
+	background-color: #505050;
     color: #DDDDDD;
-    color: #5e5e5e;
     font-family: monospace;
     font-weight: bold;
 }
@@ -51,8 +49,7 @@ input[type="text"] {
 #metadata-cruncher .group .group {
     padding: 2px;
     border-radius: 3px;
-    background-color: #565656;
-    background-color: #faf5ed;
+    background-color: #676767;
 }
 
 #metadata-cruncher .bracket {
@@ -64,22 +61,22 @@ input[type="text"] {
 }
 
 /* keys */
-#metadata-cruncher .keys .prefix {color: #53c7fe}
-#metadata-cruncher .keys .colon {color: #4ea2cf}
-#metadata-cruncher .keys .key .part {color: #94D300}
-#metadata-cruncher .keys .key .gt {color: #6f9f00}
+#metadata-cruncher .keys .prefix {color: #9BCF2B}
+#metadata-cruncher .keys .colon {color: #BAEB50}
+#metadata-cruncher .keys .key .part {color: #75C1FF}
+#metadata-cruncher .keys .key .gt {color: #BAE7FF}
 
 /* success */
-#metadata-cruncher .success .identifier {color: #94cd3b}
-#metadata-cruncher .success .value {color: #618800}
+#metadata-cruncher .success .identifier {color: #FFF15C}
+#metadata-cruncher .success .value {color: #F1AA00}
 
 /* default */
-#metadata-cruncher .default .identifier {color: #FFD162}
-#metadata-cruncher .default .value {color: #F1AA00}
+#metadata-cruncher .default .identifier {color: #FF91C2}
+#metadata-cruncher .default .value {color: #ec428c}
 
 /* default */
-#metadata-cruncher .delimiter .identifier {color: #FF6BAC}
-#metadata-cruncher .delimiter .value {color: #ec428c}
+#metadata-cruncher .delimiter .identifier {color: #E3C4FF}
+#metadata-cruncher .delimiter .value {color: #BE85F2}
 
 
 
