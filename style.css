@@ -2,17 +2,21 @@ input[type="text"] {
 	width: 100%;
 }
 
-.to-be-removed {
-	background-color: red
-}
-
-.error {
-	background-color: red !important
+.to-be-removed, .error {
+	background-color: #FF8297
 }
 
 #custom-meta-list {
 	margin-top: 10px;
 	margin-bottom: 10px
+}
+
+#custom-meta-list .col-template {
+	width: 100%
+}
+
+#custom-meta-list .name {
+	width: 200px
 }
 
 .hidden-input {
@@ -22,10 +26,13 @@ input[type="text"] {
 	line-height: 0px;
 }
 
-#metadata-cruncher .ce {
+input[type="text"], #metadata-cruncher .ce {
+	color: #555;
 	border: 1px solid #DFDFDF;
-	border-radius: 3px;
+	vertical-align: middle;
+	border-radius: 6px;
 	background-color: white;
+	font-family: sans-serif;
 	margin: 1px;
 	padding: 3px;
 	outline: 0;
