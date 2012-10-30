@@ -533,12 +533,12 @@ class Image_Metadata_Cruncher_Plugin {
 	/**
 	 * Adds section to plugin admin page
 	 */
-	private function section($id, $title) {
+	private function section( $id, $title ) {
 		add_settings_section(
-			"{$this->prefix}_section_{$id}",					// section id
-			$title,								// title
-			array( $this, "section_{$id}" ),	// callback
-			"{$this->prefix}-section-{$id}");				// page
+			"{$this->prefix}_section_{$id}", // section id
+			$title, // title
+			array( $this, "section_{$id}" ), // callback
+			"{$this->prefix}-section-{$id}"); // page
 	}
 	
 	/**
@@ -560,6 +560,8 @@ class Image_Metadata_Cruncher_Plugin {
 	    $this->section( 1, 'Media form fields:' );
 	    $this->section( 2, 'Custom image meta tags:' );
 	    $this->section( 3, 'Available metadata variables:' );
+	    $this->section( 4, 'Usage:' );
+	    $this->section( 5, 'About Image Metadata Cruncher:' );
 	    
 	    ///////////////////////////////////
 	    // Options
@@ -643,17 +645,44 @@ class Image_Metadata_Cruncher_Plugin {
 	 */
 	public function options_cb() { ?>
 		<div id="metadata-cruncher" class="wrap metadata-cruncher">
-			<h2>Metadata Cruncher options</h2>
+			<h2>Image Metadata Cruncher Options</h2>
 			<?php settings_errors(); ?>
+			<h2 class="nav-tab-wrapper">
+				<?php
+					if ( isset( $_GET[ 'tab' ] ) ) {
+						$active_tab = $_GET[ 'tab' ];
+					} else {
+						$active_tab = 'settings';
+					}
+					
+					function active_tab( $value, $at  ) {
+						if ( $at == $value ) {
+							echo 'nav-tab-active';
+						}
+					}
+				?>
+				<a href="?page=image_metadata_cruncher-options&tab=settings" class="nav-tab <?php active_tab( 'settings', $active_tab ); ?>">Settings</a>
+				<a href="?page=image_metadata_cruncher-options&tab=metadata" class="nav-tab <?php active_tab( 'metadata', $active_tab ); ?>">Available Metadata Tags</a>
+				<a href="?page=image_metadata_cruncher-options&tab=usage" class="nav-tab <?php active_tab( 'usage', $active_tab ); ?>">Usage</a>
+				<a href="?page=image_metadata_cruncher-options&tab=about" class="nav-tab <?php active_tab( 'about', $active_tab ); ?>">About</a>
+			</h2>
 			<form action="options.php" method="post">
-				<?php settings_fields( "{$this->prefix}_title" ); // renders hidden input fields ?>
-				<?php settings_fields( "{$this->prefix}_alt" ); // renders hidden input fields ?>
-				<?php do_settings_sections( "{$this->prefix}-section-1" ); ?>
-				<?php do_settings_sections( "{$this->prefix}-section-2" ); ?>	
-				<?php do_settings_sections( "{$this->prefix}-section-3" ); ?>		
-				<?php submit_button(); ?>
+				<?php
+					settings_fields( "{$this->prefix}_title" ); // renders hidden input fields
+					settings_fields( "{$this->prefix}_alt" ); // renders hidden input fields
+					if ( $active_tab == 'settings' ) {
+						do_settings_sections( "{$this->prefix}-section-1" );
+						do_settings_sections( "{$this->prefix}-section-2" );
+						submit_button();
+					} elseif ( $active_tab == 'metadata' ) {
+						do_settings_sections( "{$this->prefix}-section-3" );
+					} elseif ( $active_tab == 'usage' ) {
+						do_settings_sections( "{$this->prefix}-section-4" );
+					} elseif ( $active_tab == 'about' ) {
+						do_settings_sections( "{$this->prefix}-section-5" );
+					}
+				?>
 			</form>
-			<p>Created by <strong>Peter Hudec</strong>, <a href="http://peterhudec.com" target="_blank">peterhudec.com</a>.</p>
 		</div>
 	<?php }
 	
@@ -661,6 +690,7 @@ class Image_Metadata_Cruncher_Plugin {
     // Section callbacks
     ///////////////////////////////////
     
+    // media form fields
     public function section_1() { ?>
 		<p>
 		    Specify texts with which should the media upload form be prepopulated with.
@@ -670,10 +700,16 @@ class Image_Metadata_Cruncher_Plugin {
 		</p>
 	<?php }
 	
+	// custom post metadata
 	public function section_2() { ?>
 	    <?php $options = get_option( $this->prefix ); ?>
 		<i>You can also specify your own meta fields that will be saved to the database with the picture.</i>
 		<table id="custom-meta-list" class="widefat">
+			<colgroup>
+				<col class="col-name" />
+				<col class="col-template" />
+				<col class="col-delete" />
+			</colgroup>
 			<thead>
 				<th>Name</th>
 				<th>Template</th>
@@ -696,6 +732,7 @@ class Image_Metadata_Cruncher_Plugin {
 		</div>	
 	<?php }
 	
+	// list of available metadata tags
 	public function section_3() { ?>
 		<table>
 			<thead>
@@ -755,6 +792,16 @@ class Image_Metadata_Cruncher_Plugin {
 				</tr>
 			</tbody>
 		</table>
+	<?php }
+	
+	// usage
+	public function section_4()	{ ?>
+		<p>Usage</p>
+	<?php }
+	
+	// about
+	public function section_5()	{ ?>
+		<p>Created by <strong>Peter Hudec</strong>, <a href="http://peterhudec.com" target="_blank">peterhudec.com</a>.</p>
 	<?php }
 		
 	///////////////////////////////////
