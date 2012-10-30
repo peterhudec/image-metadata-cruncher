@@ -9,8 +9,6 @@ Plugin URI: http://peterhudec.com/programming/metada
 License: GPL2
 */
 
-// includes
-require 'mappings.php';
 
 /**
  * Main plugin class
@@ -22,7 +20,91 @@ class Image_Metadata_Cruncher_Plugin {
 	private $keyword;
 	private $keywords;
 	private $pattern;
-		
+	
+	private $IPTC_MAPPING = array(
+		'1#000' => 'EnvelopeRecordVersion',
+		'1#005' => 'Destination',
+		'1#020' => 'FileFormat',
+		'1#022' => 'FileVersion',
+		'1#030' => 'ServiceIdentifier',
+		'1#040' => 'EnvelopeNumber',
+		'1#050' => 'ProductID',
+		'1#060' => 'EnvelopePriority',
+		'1#070' => 'DateSent',
+		'1#080' => 'TimeSent',
+		'1#090' => 'CodedCharacterSet',
+		'1#100' => 'UniqueObjectName',
+		'1#120' => 'ARMIdentifier',
+		'1#122' => 'ARMVersion',
+		'2#000' => 'ApplicationRecordVersion',
+		'2#003' => 'ObjectTypeReference',
+		'2#004' => 'ObjectAttributeReference',
+		'2#005' => 'ObjectName',
+		'2#007' => 'EditStatus',
+		'2#008' => 'EditorialUpdate',
+		'2#010' => 'Urgency',
+		'2#012' => 'SubjectReference',
+		'2#015' => 'Category',
+		'2#020' => 'SupplementalCategories',
+		'2#022' => 'FixtureIdentifier',
+		'2#025' => 'Keywords',
+		'2#026' => 'ContentLocationCode',
+		'2#027' => 'ContentLocationName',
+		'2#030' => 'ReleaseDate',
+		'2#035' => 'ReleaseTime',
+		'2#037' => 'ExpirationDate',
+		'2#038' => 'ExpirationTime',
+		'2#040' => 'SpecialInstructions',
+		'2#042' => 'ActionAdvised',
+		'2#045' => 'ReferenceService',
+		'2#047' => 'ReferenceDate',
+		'2#050' => 'ReferenceNumber',
+		'2#055' => 'DateCreated',
+		'2#060' => 'TimeCreated',
+		'2#062' => 'DigitalCreationDate',
+		'2#063' => 'DigitalCreationTime',
+		'2#065' => 'OriginatingProgram',
+		'2#070' => 'ProgramVersion',
+		'2#075' => 'ObjectCycle',
+		'2#080' => 'By-line',
+		'2#085' => 'By-lineTitle',
+		'2#090' => 'City',
+		'2#092' => 'Sub-location',
+		'2#095' => 'Province-State',
+		'2#100' => 'Country-PrimaryLocationCode',
+		'2#103' => 'Country-PrimaryLocationName',
+		'2#103' => 'OriginalTransmissionReference',
+		'2#105' => 'Headline',
+		'2#110' => 'Credit',
+		'2#115' => 'Source',
+		'2#116' => 'CopyrightNotice',
+		'2#118' => 'Contact',
+		'2#120' => 'Caption-Abstract',
+		'2#121' => 'LocalCaption',
+		'2#122' => 'Writer-Editor',
+		'2#125' => 'RasterizedCaption',
+		'2#130' => 'ImageType',
+		'2#131' => 'ImageOrientation',
+		'2#135' => 'LanguageIdentifier',
+		'2#150' => 'AudioType',
+		'2#151' => 'AudioSamplingRate',
+		'2#152' => 'AudioSamplingResolution',
+		'2#153' => 'AudioDuration',
+		'2#154' => 'AudioOutcue',
+		'2#184' => 'JobID',
+		'2#185' => 'MasterDocumentID',
+		'2#186' => 'ShortDocumentID',
+		'2#187' => 'UniqueDocumentID',
+	);
+	
+	private $EXIF_MAPPING = array(
+		0x0001 => 'InteropIndex',
+		0x0002 => 'InteropVersion',
+		0xa432 => 'LensInfo',
+		0xa431 => 'SerialNumber',
+		0x8830 => 'SensitivityType'
+	);
+	
 	/**
 	 * Constructor
 	 */
@@ -175,8 +257,6 @@ class Image_Metadata_Cruncher_Plugin {
 	 * e.g.: IPTC:Caption, IPTC:2.15, EXIF:SerialNumber, EXIF:LensInfo.1
 	 */
 	private function get_meta_by_key( $key, $delimiter = NULL ){
-		global $IPTC_MAPPING, $EXIF_MAPPING;
-		
 		// convert metadata keys to lowercase to allow for case insensitive keys
 		$metadata = $this->array_keys_to_lower_recursive( $this->metadata );
 		
@@ -228,7 +308,7 @@ class Image_Metadata_Cruncher_Plugin {
 			// if key starts with "IPTC"
 			
 			// search for named keyword in the IPTC mapping e.g. "IPTC:FileFormat"
-			$key = array_search( strtolower( $pieces[1] ), array_map( strtolower, $IPTC_MAPPING ));
+			$key = array_search( strtolower( $pieces[1] ), array_map( strtolower, $this->IPTC_MAPPING ));
 			
 			// if nothing found search for IPTC by code e.g. "IPTC:2#025"...
 			if( !$key ) {
@@ -284,7 +364,7 @@ class Image_Metadata_Cruncher_Plugin {
 				$key = $path[0];
 				
 				// find the appropriate EXIF hex code in the mapping...
-				$key = array_search( strtolower( $key ), array_map( strtolower, $EXIF_MAPPING ));
+				$key = array_search( strtolower( $key ), array_map( strtolower, $this->EXIF_MAPPING ));
 				// ...and convert to base 16 integer
 				$key = intval( $key , 16 );
 				
@@ -559,7 +639,7 @@ class Image_Metadata_Cruncher_Plugin {
 	    ///////////////////////////////////
 	    $this->section( 1, 'Media form fields:' );
 	    $this->section( 2, 'Custom image meta tags:' );
-	    $this->section( 3, 'Available metadata variables:' );
+	    $this->section( 3, 'Available metadata keywords:' );
 	    $this->section( 4, 'Usage:' );
 	    $this->section( 5, 'About Image Metadata Cruncher:' );
 	    
@@ -662,7 +742,7 @@ class Image_Metadata_Cruncher_Plugin {
 					}
 				?>
 				<a href="?page=image_metadata_cruncher-options&tab=settings" class="nav-tab <?php active_tab( 'settings', $active_tab ); ?>">Settings</a>
-				<a href="?page=image_metadata_cruncher-options&tab=metadata" class="nav-tab <?php active_tab( 'metadata', $active_tab ); ?>">Available Metadata Tags</a>
+				<a href="?page=image_metadata_cruncher-options&tab=metadata" class="nav-tab <?php active_tab( 'metadata', $active_tab ); ?>">Available Metadata</a>
 				<a href="?page=image_metadata_cruncher-options&tab=usage" class="nav-tab <?php active_tab( 'usage', $active_tab ); ?>">Usage</a>
 				<a href="?page=image_metadata_cruncher-options&tab=about" class="nav-tab <?php active_tab( 'about', $active_tab ); ?>">About</a>
 			</h2>
@@ -734,6 +814,17 @@ class Image_Metadata_Cruncher_Plugin {
 	
 	// list of available metadata tags
 	public function section_3() { ?>
+		<div class="tag-list iptc">
+			<?php for ($i=0; $i < 150; $i++) : ?>
+				<span class="tag">
+					<span class="first">IPTC:ObjectName</span>
+					or
+					<span class="second">IPTC:2#005</span>
+					or
+					<span class="third">IPTC:2>5</span>
+				</span>
+			<?php endfor; ?>
+		</div>
 		<table>
 			<thead>
 				<th>
