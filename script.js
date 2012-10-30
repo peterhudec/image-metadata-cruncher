@@ -323,17 +323,19 @@ jQuery(document).ready(function($) {
 	}
 	
 	function processSuccessValue(content){
-		var p = re(
-			'(', // must be preceded with
-				'[^\\\\▨]', // one non-backslash, non-cursor character
-				'|', // or
-				'[^\\\\]▨', // non-backslash followed by cursor
-			')',
-			'(\\$)' // dolar
-		);
-		return content.replace(p, function(m, precedingChar, dolar) {
-			return precedingChar + wrap(dolar, 'dolar');
-		});
+		if(content){
+			var p = re(
+				'(', // must be preceded with
+					'[^\\\\▨]', // one non-backslash, non-cursor character
+					'|', // or
+					'[^\\\\]▨', // non-backslash followed by cursor
+				')',
+				'(\\$)' // dolar
+			);
+			return content.replace(p, function(m, precedingChar, dolar) {
+				return precedingChar + wrap(dolar, 'dolar');
+			});
+		}
 	}
 	
 	function processKeys(content) {
