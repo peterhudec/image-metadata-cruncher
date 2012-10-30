@@ -301,7 +301,7 @@ jQuery(document).ready(function($) {
 			result = addToResult(result, space2);
 			result = addToResult(
 				result,
-				wrap(successIdentifier, 'identifier') + wrap(successValue, 'value'),
+				wrap(successIdentifier, 'identifier') + wrap(processSuccessValue(successValue), 'value'),
 				'success group'
 			);
 			result = addToResult(result, space3);
@@ -319,6 +319,20 @@ jQuery(document).ready(function($) {
 			result = addToResult(result, space5);
 			result = addToResult(result, closingBracket, 'closing bracket');
 			return wrap(result, 'tag group');
+		});
+	}
+	
+	function processSuccessValue(content){
+		var p = re(
+			'(', // must be preceded with
+				'[^\\\\▨]', // one non-backslash, non-cursor character
+				'|', // or
+				'[^\\\\]▨', // non-backslash followed by cursor
+			')',
+			'(\\$)' // dolar
+		);
+		return content.replace(p, function(m, precedingChar, dolar) {
+			return precedingChar + wrap(dolar, 'dolar');
 		});
 	}
 	
