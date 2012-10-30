@@ -69,6 +69,7 @@ input[type="text"] {
 /* success */
 #metadata-cruncher .success .identifier {color: #FFF15C}
 #metadata-cruncher .success .value {color: #F1AA00}
+#metadata-cruncher .success .dolar {color: #FF7300}
 
 /* default */
 #metadata-cruncher .default .identifier {color: #FF91C2}
