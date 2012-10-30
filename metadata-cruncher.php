@@ -812,18 +812,36 @@ class Image_Metadata_Cruncher_Plugin {
 		</div>	
 	<?php }
 	
+	
 	// list of available metadata tags
 	public function section_3() { ?>
 		<div class="tag-list iptc">
-			<?php for ($i=0; $i < 150; $i++) : ?>
+			<?php foreach ($this->IPTC_MAPPING as $key => $value): ?>
+				<?php 
+					$parts = explode('#', $key);
+					$part1 = $parts[0];
+					$part2 = intval($parts[1]);
+				?>
 				<span class="tag">
-					<span class="first">IPTC:ObjectName</span>
+					<span class="first">
+						<span class="prefix">IPTC</span><span class="colon">:</span><span class="part"><?php echo $value; ?></span>						
+					</span>
 					or
-					<span class="second">IPTC:2#005</span>
+					<span class="second">
+						<span class="prefix">IPTC</span><span class="colon">:</span><span class="part"><?php echo $key; ?></span>
+					</span>
 					or
-					<span class="third">IPTC:2>5</span>
+					<span class="third">
+						<span class="prefix">IPTC</span><?php
+						?><span class="colon">:</span><?php
+						?><span class="part"><?php echo $part1; ?></span><?php
+						if ( $part2 ):
+						?><span class="gt">&gt;</span><?php
+						?><span class="part"><?php echo $part2; ?><?php
+						endif ?></span>
+					</span>
 				</span>
-			<?php endfor; ?>
+			<?php endforeach ?>
 		</div>
 		<table>
 			<thead>
