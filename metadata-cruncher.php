@@ -357,7 +357,22 @@ class Image_Metadata_Cruncher_Plugin {
 	        if( $meta ) {
 	        	// return first found meta
 	        	if ( $success ) {
-	        		return str_replace(array('$', '\"'), array($meta, '"'), $success);
+	        		return str_replace(
+	        			array(
+	        				'\$', // replace escaped dolar sign with some unusual character like: ⌨
+	        				'$', // replace dolar signs for meta value
+	        				'\"', // replace escaped doublequote for doublequote
+	        				'⌨' // replace ⌨ to dolar sign
+	        			),
+	        			array(
+	        				'⌨',
+	        				$meta,
+	        				'"',
+	        				'$'
+						),
+	        			$success
+					);
+	        		return $res;
 	        	} else {
 	        		return $meta;
 	        	}
