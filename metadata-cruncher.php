@@ -97,18 +97,13 @@ class Image_Metadata_Cruncher_Plugin {
 		'2#187' => 'UniqueDocumentID',
 	);
 	
-	private $EXIF_MAPPING = array(
-		0x0001 => 'InteropIndex',
-		0x0002 => 'InteropVersion',
-		0xa432 => 'LensInfo',
-		0xa431 => 'SerialNumber',
-		0x8830 => 'SensitivityType'
-	);
-	
 	/**
 	 * Constructor
 	 */
 	function __construct() {
+		
+		// the EXIF mapping array has 414 items so it deserves its own file
+		include 'exif-mapping.php';
 		
 		$this->patterns();
 		
