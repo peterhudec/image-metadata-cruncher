@@ -289,12 +289,17 @@ class Image_Metadata_Cruncher_Plugin {
 			// returns all metadata structured according to key
 			switch ( strtolower( $path[0] )  ) {
 				case 'php':
-					//return print_r( $this->metadata, TRUE );
 					return print_r( $value, TRUE );
 					break;
 					
 				case 'json':
 					return json_encode( $value );
+					break;
+					
+				case 'jsonpp':
+					// JSON_PRETTY_PRINT constant is available since PHP 5.4.0
+					$JSON_PRETTY_PRINT = defined( 'JSON_PRETTY_PRINT' ) ? JSON_PRETTY_PRINT : NULL ;
+					return json_encode( $value, $JSON_PRETTY_PRINT );
 					break;
 					
 				case 'xml':
