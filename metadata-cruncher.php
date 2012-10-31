@@ -283,16 +283,18 @@ class Image_Metadata_Cruncher_Plugin {
 		$value = $key = NULL;
 		
 		if ( $category == 'all' ) {
-			// returns all metadata structured according to key
 				
-			switch ( strtolower( $pieces[1] )  ) {
+			$value = $this->explore_path( $this->metadata, $path, $delimiter );
+			
+			// returns all metadata structured according to key
+			switch ( strtolower( $path[0] )  ) {
 				case 'php':
 					//return print_r( $this->metadata, TRUE );
-					return print_r( $metadata, TRUE );
+					return print_r( $value, TRUE );
 					break;
 					
 				case 'json':
-					return json_encode( $this->metadata );
+					return json_encode( $value );
 					break;
 					
 				case 'xml':
@@ -302,9 +304,7 @@ class Image_Metadata_Cruncher_Plugin {
 				default:
 					break;
 			}
-		}
-		
-		if ( $category == 'iptc' ) {
+		} elseif ( $category == 'iptc' ) {
 			// if key starts with "IPTC"
 			
 			// search for named keyword in the IPTC mapping e.g. "IPTC:FileFormat"
@@ -329,10 +329,11 @@ class Image_Metadata_Cruncher_Plugin {
 					
 					// else pad leading zeros if missing e.g. "IPTC:2.5" becomes "IPTC:2#005"
 					$key = sprintf("%d#%03d", $path[0], $path[1]);
-					$value = $this->get_metadata( $metadata, $category, $key );
+					
 				}
-				
 			}
+			
+			$value = $this->get_metadata( $metadata, $category, $key );
 				
 		} elseif ( $category == 'exif' ) {
 			// if key starts with "EXIF" e.g. {EXIF:whatever.whateverelse}
@@ -377,32 +378,42 @@ class Image_Metadata_Cruncher_Plugin {
 				// and search for it in the extracted metadata
 				$value = $this->get_metadata( $metadata, $category, $key );
 			}
+			$value = $this->explore_path( $value, $path, $delimiter );
+		} else {
+			// try to find anything that is provided
+			$value = $this->get_metadata( $metadata, $category, $pieces[1] );
+			$value = $this->explore_path( $value, $path, $delimiter );
 		}
 		
 		if ( is_array( $value ) ) {
-			// if the found value is array... 
-			
-			if( isset( $path[1] ) ){
-				// if array index specified in the tag e.g. "EXIF:LensInfo.2"
-				
-				if ( isset( $value[$path[1]] ) ) {
-					
-					// the returned value will be the value of the specified index 
-					$value = $value[$path[1]];
-				}
-				
-			} else {
-				
-				// if no index specified in the tag e.g. "EXIF:LensInfo"
-				// join the array to a string by the delimiter
-				$value = implode( $delimiter, $value );
-			}
+			$value = implode( $delimiter, $value );
 		}
 		
-		// finally return the value for the key
 		return $value;
 	}
 	
+	private function explore_path( $value, $path, $delimiter, $index = 0 ) {
+		// if value is array
+		if ( is_array( $value ) ) {
+			$index++;
+			if ( isset( $path[ $index ] ) ) {
+				// if index set in the path, get its value
+				
+				// temporarily convert value and path to lowercase to allow for key insensitive lookup 
+				$value_lower = $this->array_keys_to_lower_recursive( $value );
+				$path_lower = strtolower( $path[ $index ] );
+				$value = $value_lower[ $path_lower ];
+				
+				// before returning check if there is not another part of the path
+				return $this->explore_path( $value, $path, $delimiter, $index );
+			} else {
+				return $value;
+			}
+		} else {
+			// if value is not an aray return it
+			return $value;
+		}
+	}
 	
 	private function validate_tag ( $tag, $pattern ) {
 		preg_match( $pattern, $tag, $match );
@@ -815,6 +826,23 @@ class Image_Metadata_Cruncher_Plugin {
 	
 	// list of available metadata tags
 	public function section_3() { ?>
+		
+		<h2>EXIF</h2>
+		<div class="tag-list exif">
+			<?php foreach ($this->EXIF_MAPPING as $key => $value): ?>
+				<span class="tag">
+					<span class="first">
+						<span class="prefix">EXIF</span><span class="colon">:</span><span class="part"><?php echo $value; ?></span>						
+					</span>
+					or
+					<span class="second">
+						<span class="prefix">EXIF</span><span class="colon">:</span><span class="part"><?php echo sprintf("0x%04x", $key); ?></span>
+					</span>
+				</span>
+			<?php endforeach ?>
+		</div>
+		
+		<h2>IPTC</h2>
 		<div class="tag-list iptc">
 			<?php foreach ($this->IPTC_MAPPING as $key => $value): ?>
 				<?php 
@@ -843,6 +871,7 @@ class Image_Metadata_Cruncher_Plugin {
 				</span>
 			<?php endforeach ?>
 		</div>
+		
 		<table>
 			<thead>
 				<th>
