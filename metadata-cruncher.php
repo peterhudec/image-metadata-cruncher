@@ -735,7 +735,7 @@ class Image_Metadata_Cruncher_Plugin {
 				<tr>
 	                <td><input type="text" class="name" value="<?php echo $key ?>" /></td>
 	                <td>
-	                	<div class="ce" contenteditable="true"><?php echo $value ?></div>
+	                	<div class="highlighted ce" contenteditable="true"><?php echo $value ?></div>
 	                	<?php // used textarea because hidden input caused bugs when whitespace got converted to &nbsp; ?>
 	                	<textarea class="hidden-input template" name="<?php echo $this->prefix; ?>[custom_meta][<?php echo $key ?>]" ><?php echo $value ?></textarea>
 	                </td>
@@ -752,22 +752,49 @@ class Image_Metadata_Cruncher_Plugin {
 	// list of available metadata tags
 	public function section_3() { ?>
 		
-		<h2>EXIF</h2>
-		<div class="tag-list exif">
-			<?php foreach ($this->EXIF_MAPPING as $key => $value): ?>
-				<span class="tag">
-					<span class="first">
-						<span class="prefix">EXIF</span><span class="colon">:</span><span class="part"><?php echo $value; ?></span>						
-					</span>
-					or
-					<span class="second">
-						<span class="prefix">EXIF</span><span class="colon">:</span><span class="part"><?php echo sprintf("0x%04x", $key); ?></span>
-					</span>
-				</span>
-			<?php endforeach ?>
+		<h2>SPECIAL:</h2>
+		<div>
+			<table>
+				<tr>
+					<td class="tag-list special">
+						<span class="tag">
+							<span class="first">
+								<span class="prefix">ALL</span><span class="colon">:</span><span class="part">php</span>						
+							</span>
+						</span>
+					</td>
+					<td>
+						Prints out all found metadata formated as PHP array.
+					</td>
+				</tr>
+				<tr>
+					<td class="tag-list special">
+						<span class="tag">
+							<span class="first">
+								<span class="prefix">ALL</span><span class="colon">:</span><span class="part">json</span>						
+							</span>
+						</span>
+					</td>
+					<td>
+						Prints out all found metadata formated as JSON.
+					</td>
+				</tr>
+				<tr>
+					<td class="tag-list special">
+						<span class="tag">
+							<span class="first">
+								<span class="prefix">ALL</span><span class="colon">:</span><span class="part">jsonpp</span>						
+							</span>
+						</span>
+					</td>
+					<td>
+						Prints out all found metadata formated as pretty printed JSON (works only in PHP 5.4.0, in older versions behaves like ALL:json).
+					</td>
+				</tr>
+			</table>			
 		</div>
 		
-		<h2>IPTC</h2>
+		<h2>IPTC:</h2>
 		<div class="tag-list iptc">
 			<?php foreach ($this->IPTC_MAPPING as $key => $value): ?>
 				<?php 
@@ -797,69 +824,27 @@ class Image_Metadata_Cruncher_Plugin {
 			<?php endforeach ?>
 		</div>
 		
-		<table>
-			<thead>
-				<th>
-					IPTC
-				</th>
-				<th>
-					EXIF
-				</th>
-			</thead>
-			<tbody>
-				<tr>
-					<td>
-						<table class="widefat">
-							<thead>
-								<th>
-									Tag
-								</th>
-								<th>
-									Alternative
-								</th>
-							</thead>
-							<tbody>
-								<tr>
-									<td>
-										IPTC:ObjectName
-									</td>
-									<td>
-										IPTC:2.005
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</td>
-					<td>
-						<table class="widefat">
-							<thead>
-								<th>
-									Tag
-								</th>
-								<th>
-									Alternative
-								</th>
-							</thead>
-							<tbody>
-								<tr>
-									<td>
-										EXIF:InteropIndex
-									</td>
-									<td>
-										EXIF:0x0001
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</td>
-				</tr>
-			</tbody>
-		</table>
+		<h2 >EXIF:</h2>
+		<div class="tag-list exif">
+			<?php foreach ($this->EXIF_MAPPING as $key => $value): ?>
+				<span class="tag">
+					<span class="first">
+						<span class="prefix">EXIF</span><span class="colon">:</span><span class="part"><?php echo $value; ?></span>						
+					</span>
+					or
+					<span class="second">
+						<span class="prefix">EXIF</span><span class="colon">:</span><span class="part"><?php echo sprintf("0x%04x", $key); ?></span>
+					</span>
+				</span>
+			<?php endforeach ?>
+		</div>
+		
 	<?php }
 	
 	// usage
 	public function section_4()	{ ?>
 		<p>Usage</p>
+		<span class="highlighted">{IPTC:bla}</span>
 	<?php }
 	
 	// about
@@ -876,7 +861,7 @@ class Image_Metadata_Cruncher_Plugin {
 	 */
 	private function cb( $key ) { ?>
 		<?php $options = get_option( $this->prefix ); ?>
-		<div class="ce" contenteditable="true"><?php echo $options[$key]; ?></div>
+		<div class="highlighted ce" contenteditable="true"><?php echo $options[$key]; ?></div>
 		<?php // used textarea because hidden input caused bugs when whitespace got converted to &nbsp; ?>
 		<textarea class="hidden-input" id="<?php echo $this->prefix; ?>[<?php echo $key; ?>]" name="<?php echo $this->prefix; ?>[<?php echo $key; ?>]"><?php echo $options[$key]; ?></textarea>
 	<?php }

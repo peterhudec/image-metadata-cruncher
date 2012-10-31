@@ -55,7 +55,7 @@ jQuery(document).ready(function($) {
 		
 		// on keyup changes name attr of $template
 		var $name = $('<input type="text" class="name" />');
-		var $ce = $('<div class="ce" contenteditable="true"></div>');
+		var $ce = $('<div class="ce highlighted" contenteditable="true"></div>');
 		//var $template = $('<input type="hidden" class="hidden-input template" />'); // this field will be saved upon submit
 		var $template = $('<textarea class="hidden-input template"></textarea>'); // this field will be saved upon submit
 		var $remove = $('<button class="button">Remove</button>');
@@ -66,12 +66,13 @@ jQuery(document).ready(function($) {
 		$customMeta.append($row);
 	});
 	
+		
 	///////////////////////////////////////////
 	// Tag syntax highlighting
 	///////////////////////////////////////////
 	
 	// events
-	$('#metadata-cruncher').delegate('.ce', 'keyup', function(event) {
+	$('#metadata-cruncher').delegate('.highlighted', 'keyup', function(event) {
 		var $target = $(event.target);
 		var text = highlight(event);
 		$out = $target.parent().children('.hidden-input');
@@ -83,12 +84,12 @@ jQuery(document).ready(function($) {
 	
 	rangy.addInitListener(function(r){
 		// triger the keyup event on content editable elements when rangy is ready
-		$('#metadata-cruncher .ce').keyup();
+		$('#metadata-cruncher .highlighted').keyup();
 	});
 	
 	$('#submit').click(function() {
 		// before submitting make sure, that all textareas are properly filled out
-		$('#metadata-cruncher .ce').keyup();
+		$('#metadata-cruncher .highlighted').keyup();
 	});
 	
 	function wrap(value, className){
