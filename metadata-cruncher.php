@@ -20,6 +20,7 @@ class Image_Metadata_Cruncher_Plugin {
 	private $keyword;
 	private $keywords;
 	private $pattern;
+	public $plugin_name = 'Image Metadata Cruncher';
 	
 	/**
 	 * Constructor
@@ -576,7 +577,7 @@ class Image_Metadata_Cruncher_Plugin {
 	    $this->section( 1, 'Media form fields:' );
 	    $this->section( 2, 'Custom image meta tags:' );
 	    $this->section( 3, 'Available metadata keywords:' );
-	    $this->section( 4, 'Usage:' );
+	    $this->section( 4, __( 'How to Use Template Tags:' ) );
 	    $this->section( 5, 'About Image Metadata Cruncher:' );
 	    
 	    ///////////////////////////////////
@@ -679,7 +680,7 @@ class Image_Metadata_Cruncher_Plugin {
 				?>
 				<a href="?page=image_metadata_cruncher-options&tab=settings" class="nav-tab <?php active_tab( 'settings', $active_tab ); ?>">Settings</a>
 				<a href="?page=image_metadata_cruncher-options&tab=metadata" class="nav-tab <?php active_tab( 'metadata', $active_tab ); ?>">Available Metadata</a>
-				<a href="?page=image_metadata_cruncher-options&tab=usage" class="nav-tab <?php active_tab( 'usage', $active_tab ); ?>">Usage</a>
+				<a href="?page=image_metadata_cruncher-options&tab=usage" class="nav-tab <?php active_tab( 'usage', $active_tab ); ?>"><?php _e( 'How to Use Template Tags:' ) ?></a>
 				<a href="?page=image_metadata_cruncher-options&tab=about" class="nav-tab <?php active_tab( 'about', $active_tab ); ?>">About</a>
 			</h2>
 			<form action="options.php" method="post">
@@ -709,17 +710,26 @@ class Image_Metadata_Cruncher_Plugin {
     // media form fields
     public function section_1() { ?>
 		<p>
-		    Specify texts with which should the media upload form be prepopulated with.
-		    You can use metadata tags inside curly brackets<code>{}</code>.
-		    <br />
-		    <strong>Example:</strong> <code>Image was taken with {EXIF:Model} camera.</code>
+		    Specify text templates with which should the media upload form be prepopulated with.
+		    Use template tags like this <code>{ IPTC:Headline }</code> to place found metadata into the templates.
+			Template tags can be as simple as <code>{ EXIF:Model }</code> or more complex like
+			<code>{ EXIF:LensInfo>2 | EXIF:LensModel @ "Lens info is $" % "Lens info not found" # "; " }</code>.
+		</p>
+		<p>
+			Tags with invalid syntax will be ignored by the plugin and will apear
+			unchanged in the <em>Upload Media Form</em> fields.
+			For your better orientation valid template tags get highlighted as you type.
+		</p>
+		<p>
+			To find out more about the template tag syntax read the
+			<a href="?page=image_metadata_cruncher-options&tab=usage">How to Use Template Tags</a> section.
 		</p>
 	<?php }
 	
 	// custom post metadata
 	public function section_2() { ?>
 	    <?php $options = get_option( $this->prefix ); ?>
-		<i>You can also specify your own meta fields that will be saved to the database with the picture.</i>
+		<i>Here you can specify your own meta fields that will be saved to the database with the uploaded picture.</i>
 		<table id="custom-meta-list" class="widefat">
 			<colgroup>
 				<col class="col-name" />
@@ -747,7 +757,6 @@ class Image_Metadata_Cruncher_Plugin {
 			<button id="add-custom-meta" class="button">Add New Field</button>
 		</div>	
 	<?php }
-	
 	
 	// list of available metadata tags
 	public function section_3() { ?>
@@ -841,10 +850,457 @@ class Image_Metadata_Cruncher_Plugin {
 		
 	<?php }
 	
-	// usage
+	// how to use template tags
 	public function section_4()	{ ?>
-		<p>Usage</p>
-		<span class="highlighted">{IPTC:bla}</span>
+		<p>
+			The Image Metadata Cruncher plugin uses template tags enclosed in curly brackets
+			<code>{}</code>
+			to place metadata into your predefined templates.
+			You can use multiple template tags inside one template.
+			The tags are case insensitive so
+			<code>{ EXIF:ImageDescription }</code> is the same as
+			<code>{ exif:imagedescription }</code> or
+			<code>{ EXIF:IMAGEDESCRIPTION }</code>.
+			Only tags with valid syntax will be processed by the plugin.
+			Faulty tags will be ignored and printed out in the <em>Upload New Media</em> form as they are.
+			Valid template tags get highlighted as you type, so you can immediately see whether they are valid or not.
+		</p>
+		<br />
+		
+		<h2>Simplest template tag</h2>
+		<p>
+			The simplest tag consist of a metadata keyword inside curly brackets.
+			The keyword itself consist of prefix defining the metadata category e.g.
+			<code>IPTC</code>, <code>EXIF</code> a colon
+			<code>:</code>
+			and the actual metadata identifier
+			<code>Make</code>:
+		</p>
+		<code>
+			{ EXIF:Make }
+		</code>
+		<p>
+			If for instance you only need to retrieve the information about the camera make
+			from the image EXIF metadata you can use it like this:
+		</p>
+		<div class="ce highlighted">
+			{ EXIF:Make }
+		</div>	
+		<p>
+			If the image contains the requested metadata the tag will be replaced with the found value and
+			if the image was taken with a Canon camera, the text in the
+			<em>Upload New Media</em> form would be:
+		</p>
+		<div class="example ok">
+			Canon
+		</div>
+		<p>
+			If the image doesn't contain such information the tag will return an empty string:
+		</p>
+		<div class="example err"></div>
+		<br />
+		
+		<h2>Template tag with fallback keywords</h2>
+		<p>
+			It can happen that the image doesn't contain the metadata specified in the template tag
+			but contains another, similar one in some other metadata field.
+			In such cases you can specify a fallback keyword inside the tag after the first one
+			delimited by the <code>|</code> pipe sign.
+		</p>
+		<code>
+			{ IPTC:Caption | EXIF:ImageDescription }
+		</code>
+		<p>
+			If for instance you want to retrieve the image's IPTC caption and in case it is not available
+			try to get the EXIF image description you can use a tag like this:
+		</p>
+		<div class="ce highlighted">
+			{ IPTC:Caption | EXIF:ImageDescription }
+		</div>
+		<p>
+			If the image contains the IPTC caption it will return it:
+		</p>
+		<div class="example ok">
+			Sample IPTC caption.
+		</div>
+		<p>
+			If not, it tries to retrieve the value specified in the next keyword after the pipe, which is
+			<code>EXIF:ImageDescription</code>. If the image contains it, the tag will be replaced with it.
+		</p>
+		<div class="example ok">
+			Sample EXIF image description.
+		</div>
+		<p>
+			Again, if the image doesn't contain any of the requested metadata, it will return an empty string:
+		</p>
+		<div class="example err"></div>
+		<p>
+			You can chain as many fallback keywords as you want.
+			The tag will be replaced with the first found value in specified order.
+		</p>
+		<code>
+			{ IPTC:Headline | IPTC:ObjectName | EXIF:ImageDescription | EXIF:ModifyDate }
+		</code>
+		<br />
+		<br />
+		
+		<h2>Available Metadata</h2>
+		<p>
+			The first part of a keyword (before the colon) specifies the metadata group,
+			the second part (after the colon) specifies a particular metadata within the group.
+			There are three main groups of metadata:
+			<code>EXIF</code>,
+			<code>IPTC</code> and
+			<code>ALL</code>.
+		</p>
+		<p>
+			The <code>EXIF</code> and <code>IPTC</code> groups are self explanatory.
+			Check the
+			<a href="?page=image_metadata_cruncher-options&tab=metadata">Available Metadata</a> 
+			section to get the list of available suffixes.
+		</p>
+		<p>
+			The <code>ALL</code> group is special. Its main purpose is debugging.
+			It returns all metadata found in the uploaded image formatted according to the keyword suffix,
+			which can be <code>php</code>, <code>json</code> and <code>jsonpp</code>.
+		</p>
+		<p>
+			Here is a truncated example of
+			<code>{ ALL:php }</code>
+			tag in action.
+		</p>
+		<div class="ce highlighted" >
+			{ ALL:php }
+		</div>
+		<p>
+			It returns all metadata found in the image formatted as nested PHP arrays.
+		</p>
+		<div class="example ok"><pre style="overflow: hidden">Array
+(
+    [size] => Array
+        (
+            [0] => 589
+            [1] => 632
+            [2] => 2
+            [3] => width="589" height="632"
+            [bits] => 8
+            [channels] => 3
+            [mime] => image/jpeg
+        )
+
+    [IPTC] => Array
+        (
+            [1#005] => Destination
+            [1#050] => ProductID
+            [2#122] => Writer-Editor
+            (...truncated for brevity...)
+        )
+
+    [EXIF] => Array
+        (
+            [FileName] => phpXIEcbo
+            [FileDateTime] => 1351882303
+            [FileSize] => 145110
+            [FileType] => 2
+            [MimeType] => image/jpeg
+            [SectionsFound] => ANY_TAG, IFD0, THUMBNAIL, EXIF
+            [COMPUTED] => Array
+                (
+                    [html] => width="589" height="632"
+                    [Height] => 632
+                    [Width] => 589
+                    [IsColor] => 1
+                    [ByteOrderMotorola] => 0
+                    [ApertureFNumber] => f/2.8
+                    [FocusDistance] => 4294967296.00m
+                    [Thumbnail.FileType] => 2
+                    [Thumbnail.MimeType] => image/jpeg
+                )
+
+            [ImageDescription] => A long exposure photo made available 13 May 2012 shows a bull rider trying to hold onto a bull during the first ever Bull Riding Slovakia Cup in Bratislava, Slovakia, 12 May 2012. EPA/PETER HUDEC
+            [Make] => Canon
+            [THUMBNAIL] => Array
+                (
+                    [Compression] => 6
+                    [XResolution] => 72/1
+                    [YResolution] => 72/1
+                    [ResolutionUnit] => 2
+                    [JPEGInterchangeFormat] => 984
+                    [JPEGInterchangeFormatLength] => 12614
+                )
+
+            [ExposureTime] => 1/5
+            [UndefinedTag:0xA432] => Array
+                (
+                    [0] => 70/1
+                    [1] => 200/1
+                    [2] => 0/0
+                    [3] => 0/0
+                )
+			[UndefinedTag:0xA434] => EF70-200mm f/2.8L USM
+			(...truncated for brevity...)
+        )
+
+)</pre></div>
+		
+		
+		<br />
+		
+		<h2>Accessing Nested Metadata</h2>
+		<p>
+			As you can see on the example above some of the metadata like
+			<code>EXIF:COMPUTED</code> or
+			<code>EXIF:0xA432</code>
+			are in the form of an array.
+			You can request such metadata directly:
+		</p>
+		<div class="ce highlighted" >
+			{ EXIF:COMPUTED }
+		</div>
+		<p>
+			If found the value will be returned as a comma separated list.
+		</p>
+		<div class="example ok">
+			width="589" height="632", 632, 589, 1, 0, f/2.8, 4294967296.00m, 2, image/jpeg
+		</div>
+		<p>
+			Or you can acces the items of the array by specifiing the desired index
+			after a <code>&gt;</code> greater than sign:
+		</p>
+		<div class="ce highlighted" >
+			{ EXIF:COMPUTED>FocusDistance }
+		</div>
+		<p>
+			If found the value will be returned directly.
+		</p>
+		<div class="example ok">
+			4294967296.00m
+		</div>
+		<p>
+			The path can be nested arbitrarily deep. You can even use it with the
+			<code>ALL</code> category like this:
+		</p>
+		<div class="ce highlighted" >
+			{ ALL:json>EXIF>COMPUTED }
+		</div>
+		<p>
+			If found the value will be returned as a JSON array.
+		</p>
+		<div class="example ok">
+			{"html":"width="589" height="632"","height":632,"width":589,"iscolor":1,"byteordermotorola":0,"aperturefnumber":"f/2.8","focusdistance":"4294967296.00m","thumbnail.filetype":2,"thumbnail.mimetype":"image/jpeg"}
+		</div>
+		<br />
+		
+		<h2>Other Tag Options</h2>
+		<p>
+			Tags are replaced by empty string if no metadata found.
+			This can sometimes lead to undesired results:
+		</p>
+		<div class="ce highlighted" >
+			The picture was taken with { EXIF:Make } camera.
+		</div>
+		<p>
+			If found, there's no problem.
+		</p>
+		<div class="example ok">
+			The picture was taken with Canon camera.
+		</div>
+		<p>
+			If not found, the result is a pointless sentence with double whitespace between
+			the words <em>with</em> and <em>camera</em>.
+		</p>
+		<div class="example err">
+			The picture was taken with&nbsp;&nbsp;camera.
+		</div>
+		<br />
+		
+		<h3>The Default Option</h3>
+		<p>
+			We can avoid that by using the
+			<strong>default</strong> option in the form <code>% "not found text"</code>.
+			The previous example would then look like this:
+		</p>
+		<div class="ce highlighted" >
+			The picture was taken with { EXIF:Make % "unknown" } camera.
+		</div>
+		<p>
+			If found, the tag would be replaced by the found value.
+		</p>
+		<div class="example ok">
+			The picture was taken with Canon camera.
+		</div>
+		<p>
+			If not found, the default text will be used.
+		</p>
+		<div class="example err">
+			The picture was taken with unknown camera.
+		</div>
+		<br />
+		
+		<h3>The Success Option</h3>
+		<p>
+			The <strong>success</strong> option in the form <code>@ "success $ text"</code>
+			together with the default option allow you to have greater controll over the resulting text.
+			The <code>$</code> dollar sign has a special meaning and will be replaced by the found value.
+			Here is an example:
+		</p>
+		<div class="ce highlighted" >
+			{ EXIF:Model @ "The picture was taken with $." % "Camera info is not available!" }
+		</div>
+		<p>
+			If found, the tag would be replaced by the string specified in the success option,
+			with the <code>$</code> dollar sign replaced by the found value.
+		</p>
+		<div class="example ok">
+			The picture was taken with Canon EOS 7D.
+		</div>
+		<p>
+			If not found, the default text will be used.
+		</p>
+		<div class="example err">
+			Camera info is not available!
+		</div>
+		<br />
+		
+		<h3>The Delimiter Option</h3>
+		<p>
+			The <strong>delimiter</strong> option in the form <code># "delimiter text"</code>
+			allows you to replace the default delimiter
+			<code>, </code> which separates the values returned by array metadata.
+		</p>
+		<div class="ce highlighted" >
+			{ EXIF:LensInfo # " >>> " }
+		</div>
+		<p>
+			If the found metadata is an array, the delimiter string will be used to separate its values.
+		</p>
+		<div class="example ok">
+			70/1 >>> 200/1 >>> 0/0 >>> 0/0
+		</div>
+		<br />
+		
+		<h3>Special Characters in Options</h3>
+		<p>
+			Except for the <strong>success</strong> option there is only one
+			special character <code>&quot;</code> the doublequote which must be escaped
+			by a backslash <code>\&quot;</code> if you want to use it inside the string.
+			In the <strong>success</strong> option also the <code>$</code>
+			dollar sign must be escaped <code>\$</code> if you don't want it to be replaced
+			by the found value.
+		</p>
+		<br />
+		
+		<h3>Printing Out Valid Tags</h3>
+		<p>
+			If for some strange reason you want to print out a valid tag instead of being processed
+			use escaped curly brackets <code>\{\}</code>
+		</p>
+		<div class="ce highlighted" >
+			{ EXIF:Make }, \{ EXIF:Make \}
+		</div>
+		<p>
+			The first tag will be processed, the second ignored and printed out.
+		</p>
+		<div class="example ok">
+			Canon, { EXIF:Make }
+		</div>
+		<br />
+		
+		<h2>Using it All Together</h2>
+		<p>
+			You can use all the tag options together, but they must appear in the tag
+			in a particular order.
+			You can skip any of the option but you need to preserve the order.
+		</p>
+		<ol>
+			<li>
+				Metadata keywords <code>IPTC:Headline | IPTC:ObjectName | EXIF:ImageDescription</code>
+			</li>
+			<li>
+				Success option <code>@ "success text"</code>
+			</li>
+			<li>
+				Default option <code>@ "default text"</code>
+			</li>
+			<li>
+				Delimiter option <code>@ "delimiter text"</code>
+			</li>
+		</ol>
+		<p>
+			 The whitespace inside tags has no special meaning and you can completely skip it.
+		</p>
+		<p>
+			 Here are some examples of valid tags:
+		</p>
+		<div class="ce highlighted" >
+			{ EXIF:LensInfo>2 } array index 2
+		</div>
+		<br />
+		<div class="ce highlighted" >
+			{ EXIF:LensInfo | EXIF:LensModel | EXIF:LensMake } fallback keywords
+		</div>
+		<br />
+		<div class="ce highlighted" >
+			{ EXIF:SceneCaptureType | EXIF:ExposureMode | IPTC:TimeSent @ "Info: $" % "No info found!" # " \ " } all together
+		</div>
+		<br />
+		<div class="ce highlighted" >
+			{ EXIF:LensInfo | EXIF:LensModel % "No lens info found!" # " >>> " } default and delimiter
+		</div>
+		<br />
+		<div class="ce highlighted" >
+			{ EXIF:LensInfo @ "Lens info: $" # " >>> " } success and delimiter
+		</div>
+		<br />
+		<div class="ce highlighted" >
+			{ EXIF:Make @ "Camera is \"$\"" } success with escaped quotes
+		</div>
+		<br />
+		<div class="ce highlighted" >
+			{ IPTC:ObjectName } is the same as { IPTC:2#005 } or { IPTC:2>005 } or { IPTC:2>5 }
+		</div>
+		<br />
+		<div class="ce highlighted" >
+			{ EXIF:ExposureIndex } is the same as { EXIF:0xa215 }
+		</div>
+		<br />
+		<div class="ce highlighted" >
+			{ foo:bar % "I bet this text gets printed!" } insane keywords are still valid
+		</div>
+		<br />
+		<p>
+			 And here some invalid ones:
+		</p>
+		<div class="ce highlighted" >
+			{ EXIF:LensInfo> } trailing > 
+		</div>
+		<br />
+		<div class="ce highlighted" >
+			{ EXIF:LensInfo | EXIF:LensModel | EXIF:LensMake | } trailing |
+		</div>
+		<br />
+		<div class="ce highlighted" >
+			{ EXIF:Make @ "Camera is "$"" } unescaped quotes in option string
+		</div>
+		<br />
+		<div class="ce highlighted" >
+			{ EXIF:LensInfo  # " >>> " % "No lens info found!" } options in bad order
+		</div>
+		<br />
+		<div class="ce highlighted" >
+			{ EXIF:LensInfo # " >>> " @ "Lens info: $" } options in bad order
+		</div>
+		<br />
+		<div class="ce highlighted" >
+			{ EXIF:LensMake % "No lens info found!" @ "Lens info: $" } options in bad order
+		</div>
+		<br />
+		<br />
+		<br />
+		<br />
+		<br />
+		<br />
+		
 	<?php }
 	
 	// about

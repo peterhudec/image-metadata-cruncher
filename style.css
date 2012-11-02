@@ -26,8 +26,9 @@ input[type="text"] {
 	line-height: 0px;
 }
 
-input[type="text"], #metadata-cruncher .ce {
+input[type="text"], #metadata-cruncher .ce, #metadata-cruncher .example {
 	color: #555;
+	min-height: 20px;
 	border: 1px solid #DFDFDF;
 	vertical-align: middle;
 	border-radius: 6px;
@@ -38,6 +39,19 @@ input[type="text"], #metadata-cruncher .ce {
 	outline: 0;
 	line-height: 20px;
 	font-weight: bold;
+}
+
+#metadata-cruncher .example {
+	background-color: #F5F5F5;
+	word-wrap: break-word
+}
+
+#metadata-cruncher .example.ok {
+	background-color: #e7f5c4
+}
+
+#metadata-cruncher .example.err {
+	background-color: #ffccd4
 }
 
 #metadata-cruncher .ce:focus {border-color: #BBB}
@@ -89,6 +103,7 @@ input[type="text"], #metadata-cruncher .ce {
 /**
  * 	list of available tags
  */
+
 #metadata-cruncher .tag-list > span {
 	background-color: #505050;
 	color: #DDDDDD;
@@ -104,7 +119,7 @@ input[type="text"], #metadata-cruncher .ce {
 	background-color: #676767;
 	color: #BBBBBB;
 	border-radius: 3px;
-	padding: 2px;
+	padding: 2px 6px;
 }
 
 #metadata-cruncher .tag-list.iptc .first {
@@ -120,6 +135,13 @@ input[type="text"], #metadata-cruncher .ce {
 }
 
 
+#metadata-cruncher .tag-list.exif .first {
+	width: 210px;
+}
+
+#metadata-cruncher .tag-list.exif .second {
+	width: 80px;
+}
 
 
 
