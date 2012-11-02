@@ -75,11 +75,16 @@ jQuery(document).ready(function($) {
 	$('#metadata-cruncher').delegate('.highlighted', 'keyup', function(event) {
 		var $target = $(event.target);
 		var text = highlight(event);
-		$out = $target.parent().children('.hidden-input');
-		$out.html(text);
 		
-		// find and replace all &nbsp; entities which break functionality
-		$out.html($out.html().replace(/&nbsp;/g, ' '));
+		// pass the resulting text to the hidden input form field
+		$out = $target.parent().children('.hidden-input');
+		// but only if that exists
+		if($out.length){
+			$out.html(text);
+			
+			// find and replace all &nbsp; entities which break functionality
+			$out.html($out.html().replace(/&nbsp;/g, ' '));
+		}
 	})
 	
 	rangy.addInitListener(function(r){
