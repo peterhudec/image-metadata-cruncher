@@ -85,7 +85,7 @@ input[type="text"], #metadata-cruncher .ce, #metadata-cruncher .example {
 #metadata-cruncher .keys .prefix, .tag-list .prefix {color: #75C1FF}
 #metadata-cruncher .keys .colon, .tag-list .colon  {color: #BAE7FF}
 #metadata-cruncher .keys .key .part, .tag-list .part {color: #98C720}
-#metadata-cruncher .keys .key .gt {color: #D1F578}
+#metadata-cruncher .keys .key .gt, .tag-list .gt {color: #D1F578}
 
 /* success */
 #metadata-cruncher .success .identifier {color: #FFF15C}
