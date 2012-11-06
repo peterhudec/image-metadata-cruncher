@@ -565,10 +565,10 @@ class Image_Metadata_Cruncher_Plugin {
 	    
 	    // register stylesheet and script for admin
 	    //js_rangy
-	    wp_register_script( "{$this->prefix}_rangy_core", plugins_url( 'rangy-core.js', __FILE__ ) );
-	    wp_register_script( "{$this->prefix}_rangy_selectionsaverestore", plugins_url( 'rangy-selectionsaverestore.js', __FILE__ ) );
-	    wp_register_script( "{$this->prefix}_script", plugins_url( 'script.js', __FILE__ ) );
-	    wp_register_script( "{$this->prefix}_highlighting", plugins_url( 'highlighting.js', __FILE__ ) );
+	    wp_register_script( "{$this->prefix}_rangy_core", plugins_url( 'js/rangy-core.js', __FILE__ ) );
+	    wp_register_script( "{$this->prefix}_rangy_selectionsaverestore", plugins_url( 'js/rangy-selectionsaverestore.js', __FILE__ ) );
+	    wp_register_script( "{$this->prefix}_script", plugins_url( 'js/script.js', __FILE__ ) );
+	    wp_register_script( "{$this->prefix}_highlighting", plugins_url( 'js/highlighting.js', __FILE__ ) );
 	    wp_register_style( "{$this->prefix}_style", plugins_url( 'style.css', __FILE__ ) );
 	    
 	    ///////////////////////////////////
