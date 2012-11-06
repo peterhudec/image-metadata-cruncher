@@ -683,23 +683,24 @@ class Image_Metadata_Cruncher_Plugin {
 				<a href="?page=image_metadata_cruncher-options&tab=usage" class="nav-tab <?php active_tab( 'usage', $active_tab ); ?>"><?php _e( 'How to Use Template Tags:' ) ?></a>
 				<a href="?page=image_metadata_cruncher-options&tab=about" class="nav-tab <?php active_tab( 'about', $active_tab ); ?>">About</a>
 			</h2>
-			<form action="options.php" method="post">
-				<?php
-					settings_fields( "{$this->prefix}_title" ); // renders hidden input fields
-					settings_fields( "{$this->prefix}_alt" ); // renders hidden input fields
-					if ( $active_tab == 'settings' ) {
+			
+			<?php if ( $active_tab == 'settings' ): ?>
+				<form action="options.php" method="post">
+					<?php
+						settings_fields( "{$this->prefix}_title" ); // renders hidden input fields
+						settings_fields( "{$this->prefix}_alt" ); // renders hidden input fields
 						do_settings_sections( "{$this->prefix}-section-1" );
 						do_settings_sections( "{$this->prefix}-section-2" );
 						submit_button();
-					} elseif ( $active_tab == 'metadata' ) {
-						do_settings_sections( "{$this->prefix}-section-3" );
-					} elseif ( $active_tab == 'usage' ) {
-						do_settings_sections( "{$this->prefix}-section-4" );
-					} elseif ( $active_tab == 'about' ) {
-						do_settings_sections( "{$this->prefix}-section-5" );
-					}
-				?>
-			</form>
+					?>
+				</form>
+			<?php elseif ( $active_tab == 'metadata' ): ?>
+				<?php do_settings_sections( "{$this->prefix}-section-3" ); ?>
+			<?php elseif ( $active_tab == 'usage' ): ?>
+				<?php do_settings_sections( "{$this->prefix}-section-4" ); ?>
+			<?php elseif ( $active_tab == 'about' ): ?>
+				<?php do_settings_sections( "{$this->prefix}-section-5" ); ?>
+			<?php endif ?>
 		</div>
 	<?php }
 	
@@ -761,7 +762,25 @@ class Image_Metadata_Cruncher_Plugin {
 	// list of available metadata tags
 	public function section_3() { ?>
 		
+		<p>
+			The <strong>Image Metadata Cruncher</strong> template <strong>tags are case insensitive</strong> and so are the metadata keywords.
+			Thus <code>EXIF:ImageHeight</code> is the same as <code>exif:imageheight</code> and <code>EXIF:IMAGEHEIGHT</code>.
+		</p>
+		
 		<h2>SPECIAL:</h2>
+		<p>
+			The <code>ALL:php</code>, <code>ALL:json</code> and <code>ALL:jsonpp</code> keywords
+			return all the available information structured as nested arrays,
+			formatted according to the suffix after the colon <code>:</code>.
+			You can access the nested values using the <code>&gt;</code> greater than notation.
+			For example
+			<code>{ALL:php>iptc}</code>,
+			<code>{ALL:json>exif}</code>,
+			<code>{ALL:jsonpp>iptc>caption}</code>,
+			<code>{ALL:php>exif>computed}</code>,
+			<code>{ALL:json>exif>computed>ApertureFNumber}</code>,
+			<code>{ALL:jsonpp>exif>0xA432>3}</code> and so forth.
+		</p>
 		<div>
 			<table>
 				<tr>
@@ -802,8 +821,23 @@ class Image_Metadata_Cruncher_Plugin {
 				</tr>
 			</table>			
 		</div>
+		<br />
 		
 		<h2>IPTC:</h2>
+		<p>
+			The plugin gets the image <strong>IPTC</strong> metadata using the <strong>PHP</strong> <code>iptcparse()</code> function. 
+			This list of <strong>IPTC</strong> tags is based on the
+			<a target="_blank" href="http://owl.phy.queensu.ca/~phil/exiftool/TagNames/IPTC.html#PreObjectData">Phil Harvey's ExifTool IPTC Tag list</a>.
+			The <strong>IPTC</strong> metadata tags are organized into sections or records.
+			If you for instance want to access the <strong>IPTC ObjectName</strong> metadata you can use a name based keyword
+			<code>{IPTC:ObjectName}</code>, or since the <strong>ObjectName</strong> tag is stored with the ID
+			<code>5</code> in the <strong>IPTC ApplicationRecord section</strong> with the ID
+			<code>2</code>, you can also access it with
+			<code>{IPTC:2#005}</code>, or <code>{IPTC:2>5}</code>.
+			Use the <code>{ALL:PHP}</code> template tag to get a list of all the metadata the plugin can read from the image,
+			or <code>{ALL:PHP>IPTC}</code> to get the result of the <code>iptcparse()</code> function.
+			Here is a link to the <a target="_blank" href="http://www.iptc.org/std/IIM/4.1/specification/IIMV4.1.pdf">official IPTC metadata specification PDF</a>.
+		</p>
 		<div class="tag-list iptc">
 			<?php foreach ($this->IPTC_MAPPING as $key => $value): ?>
 				<?php 
@@ -832,8 +866,22 @@ class Image_Metadata_Cruncher_Plugin {
 				</span>
 			<?php endforeach ?>
 		</div>
+		<br />
 		
 		<h2 >EXIF:</h2>
+		<p>
+			The plugin gets the image <strong>EXIF</strong> metadata using the <strong>PHP</strong> <code>exif_read_data()</code> function. 
+			This list of <strong>EXIF</strong> tags is automatically generated from the
+			<a target="_blank" href="http://owl.phy.queensu.ca/~phil/exiftool/TagNames/EXIF.html">Phil Harvey's ExifTool EXIF Tag list</a>.
+			You can access the same <strong>EXIF</strong> metadata either by name
+			<code>{EXIF:Model}</code> or by ID, which is a hexadecimal number <code>{EXIF:0x0110}</code>.
+			If you think that the uploaded image has any <strong>EXIF</strong> metadata not listed here
+			you can still try to get it by name <code>{EXIF:FooBar}</code> or ID <code>{EXIF:0x123456}</code>
+			and if the <strong>PHP</strong> <code>exif_read_data()</code> function finds it, the template tag will return it.
+			Use the <code>{ALL:PHP}</code> template tag to get a list of all the metadata the plugin can read from the image,
+			or <code>{ALL:PHP>EXIF}</code> to get the result of the <code>exif_read_data()</code> function.
+			Here is a link to the <a target="_blank" href="http://www.cipa.jp/english/hyoujunka/kikaku/pdf/DC-008-2010_E.pdf">official EXIF metadata specification PDF</a>.
+		</p>
 		<div class="tag-list exif">
 			<?php foreach ($this->EXIF_MAPPING as $key => $value): ?>
 				<span class="tag">
@@ -1305,7 +1353,19 @@ class Image_Metadata_Cruncher_Plugin {
 	
 	// about
 	public function section_5()	{ ?>
-		<p>Created by <strong>Peter Hudec</strong>, <a href="http://peterhudec.com" target="_blank">peterhudec.com</a>.</p>
+		<p>
+			Created just for fun by me <strong>Peter Hudec</strong>.
+			you cand find out more about me at <a href="http://peterhudec.com" target="_blank">peterhudec.com</a>.
+		</p>
+		<p>
+			This plugin is and allways will be free but if you can't help yourself and want to pay for it anyway, you can do so by clicking the button below <strong>:-)</strong><br />
+		</p>
+		<form action="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=RJYHYJJD2VKAN" method="post">
+			<input type="hidden" name="cmd" value="_s-xclick">
+			<input type="hidden" name="hosted_button_id" value="RJYHYJJD2VKAN">
+			<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+			<img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
+		</form>
 	<?php }
 		
 	///////////////////////////////////
