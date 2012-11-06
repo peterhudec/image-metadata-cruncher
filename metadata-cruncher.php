@@ -1,11 +1,11 @@
 <?php
 /*
-Plugin Name: Metadata Cruncher
-Description: This plugin copies the value of description to caption in the media editor, after the media attachment has been uploaded. I created this plugin to fix the annoying feature of Wordpress, when by uploading images it copies the IPTC caption to description and leaves the caption field empty.
+Plugin Name: Image Metadata Cruncher
+Description: Gives you ultimate controll over which image metadata (EXIF or IPTC) WordPress extracts from an uploaded image and where and in what form it then goes. You can even specify unlimited custom post meta tags as the target of the extracted image metadata. 
 Version: 1.0
 Author: Peter Hudec
 Author URI: http://peterhudec.com
-Plugin URI: http://peterhudec.com/programming/metada
+Plugin URI: http://peterhudec.com/programming/image-metadata-cruncher
 License: GPL2
 */
 
@@ -1355,7 +1355,7 @@ class Image_Metadata_Cruncher_Plugin {
 	public function section_5()	{ ?>
 		<p>
 			Created just for fun by me <strong>Peter Hudec</strong>.
-			you cand find out more about me at <a href="http://peterhudec.com" target="_blank">peterhudec.com</a>.
+			You cand find out more about me at <a href="http://peterhudec.com" target="_blank">peterhudec.com</a>.
 		</p>
 		<p>
 			This plugin is and allways will be free but if you can't help yourself and want to pay for it anyway, you can do so by clicking the button below <strong>:-)</strong><br />
