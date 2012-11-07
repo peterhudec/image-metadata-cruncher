@@ -82,7 +82,7 @@ with open('iptc-mapping.php', 'w') as f:
             f.write("    '{}' => '{}',\n".format(id, name))
             print id, name
     
-    f.write(')\n')
+    f.write(');\n')
     f.write('?>')
 
 print '\ndone'
