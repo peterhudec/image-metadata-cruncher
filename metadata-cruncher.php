@@ -357,7 +357,7 @@ class Image_Metadata_Cruncher_Plugin {
 	/**
 	 * Traverses value according to path
 	 * 
-	 * @return value found at the level specified by path
+	 * @return value found at the level specified in the path
 	 */
 	private function explore_path( $value, $path, $index = 0 ) {
 		// if value is array
@@ -382,40 +382,35 @@ class Image_Metadata_Cruncher_Plugin {
 		}
 	}
 	
-	private function validate_tag ( $tag, $pattern ) {
-		preg_match( $pattern, $tag, $match );
-		if ( isset( $match[0] ) ) {
-			return $match[0];
-		}
-	}
-	
 	/**
-	 * Gets the tag contents without curly braces e.g. 'IPTC:Caption | EXIF:Model ? "default" : "delimiter"'
-	 * parses the tag and returns the value of the first succesful key or the specified default string
-	 * if the found value is an array it returns its values joined with the specified delimiter
+	 * Processes the match of a regular expression which matches the template tag and
+	 * captures keywords group and success, default and delimiter options
+	 * 
+	 * @return tag replacement or empty string
 	 */
 	private function parse_tag( $match ) {
 		
-		$keywords = isset( $match[ 'keywords' ] ) ? explode('|', $match[ 'keywords' ] ) : FALSE;
-		$success = isset( $match[ 'success' ] ) ? $match[ 'success' ] : FALSE;
-		$default = isset( $match[ 'default' ] ) ? $match[ 'default' ] : FALSE;
-		$delimiter = isset( $match[ 'delimiter' ] ) ? $match[ 'delimiter' ] : FALSE;
+		$keywords = isset( $match['keywords'] ) ? explode( '|', $match['keywords'] ) : FALSE;
+		$success = isset( $match['success'] ) ? $match['success'] : FALSE;
+		$default = isset( $match['default'] ) ? $match['default'] : FALSE;
+		$delimiter = isset( $match['delimiter'] ) ? $match['delimiter'] : FALSE;
 			
-	    // loop through keywords...
 	    foreach ( $keywords as $keyword ) {
-	    	
 	    	// search for key in metadata extracted from the image
 	        $meta = $this->get_meta_by_key( trim( $keyword ), $delimiter );
 	        
-	        if( $meta ) {
+	        if ( $meta ) {
 	        	// return first found meta
 	        	if ( $success ) {
+	        		// if success option specified
+	        		//   return success string with $ dolar sign replaced by found meta
+	        		//   and handle escaped characters
 	        		return str_replace(
 	        			array(
 	        				'\$', // replace escaped dolar sign with some unusual character like: ⌨
 	        				'$', // replace dolar signs for meta value
 	        				'\"', // replace escaped doublequote for doublequote
-	        				'⌨' // replace ⌨ to dolar sign
+	        				'⌨' // replace ⌨ with dolar sign
 	        			),
 	        			array(
 	        				'⌨',
@@ -425,25 +420,29 @@ class Image_Metadata_Cruncher_Plugin {
 						),
 	        			$success
 					);
-	        		return $res;
 	        	} else {
 	        		return $meta;
 	        	}
 	        }
 	    }
 		
-		// if flow gets here nothing was found so return default
+		// if flow gets here nothing was found so...
 		if ( $default ){
+			// ...return default if specified or...
 			return $default;
-		}else{
+		} else {
+			// ...empty string
 			return '';
 		}
 		
 	}
 	
+	/**
+	 * Declares all regex patterns used inside the class
+	 */
 	private function patterns() {
 		
-		// matches key in form abc:def(>ijk)*
+		// matches key in form of: abc:def(>ijk)*
 		$this->keyword = '
 			[\w]+ # caterory prefix
 			: # colon
@@ -454,7 +453,7 @@ class Image_Metadata_Cruncher_Plugin {
 			)*
 		';
 		
-		// matches keys in form key( | key)*
+		// matches keys in form of: key( | key)*
 		$this->keywords = '
 			'.$this->keyword.' # at least one key
 			(?: # zero or more additional keys
@@ -465,7 +464,7 @@ class Image_Metadata_Cruncher_Plugin {
 			)*
 		';
 		
-		// matches tag in form { keys @ "success" % "default" # "identifier" }
+		// matches tag in form of: { keys @ "success" % "default" # "identifier" }
 		$this->pattern = '/
 			{
 			\s*
@@ -523,12 +522,12 @@ class Image_Metadata_Cruncher_Plugin {
 	/////////////////////////////////////////////////////////////////////////////////////
 	
 	private $settings_slug = 'mc-options';
-	private $donate_url = 'http://www.paypal.com';
-	private $option_name = 'mc';
 	public $prefix = 'image_metadata_cruncher';
 	
 	/**
 	 * Adds action links to the plugin
+	 * 
+	 * @return updated plugin links
 	 */
 	public function plugin_action_links( $links, $file ) {
 		
@@ -548,6 +547,8 @@ class Image_Metadata_Cruncher_Plugin {
 	
 	/**
 	 * Adds action links to the plugin row
+	 * 
+	 * @return updated plugin links
 	 */
 	public function plugin_row_meta( $links, $file ) {
 		if ( $file == plugin_basename( __FILE__ ) ) {
@@ -558,9 +559,10 @@ class Image_Metadata_Cruncher_Plugin {
 		return $links;
 	}
 	
-	/**
-	 * js and css
-	 */
+	/////////////////////////////////////////////////////////////////////////////////////
+	// JavaScript and CSS
+	/////////////////////////////////////////////////////////////////////////////////////
+	
 	function js_rangy_core() { wp_enqueue_script( "{$this->prefix}_rangy_core" ); }
 	function js_rangy_selectionsaverestore() { wp_enqueue_script( "{$this->prefix}_rangy_selectionsaverestore" ); }
 	function js() { wp_enqueue_script( "{$this->prefix}_script" ); }
@@ -570,7 +572,7 @@ class Image_Metadata_Cruncher_Plugin {
 	/**
 	 * Default plugin options
 	 */
-	public function defaults(){
+	public function defaults() {
 		add_option( $this->option_name, array(
 			'title' => '',
 			'alt' => '',
@@ -583,14 +585,15 @@ class Image_Metadata_Cruncher_Plugin {
 	}
 	
 	/**
-	 * Adds section to plugin admin page
+	 * Adds a section to the plugin admin page
 	 */
 	private function section( $id, $title ) {
 		add_settings_section(
 			"{$this->prefix}_section_{$id}", // section id
 			$title, // title
 			array( $this, "section_{$id}" ), // callback
-			"{$this->prefix}-section-{$id}"); // page
+			"{$this->prefix}-section-{$id}" // page
+		);
 	}
 	
 	/**
@@ -598,8 +601,7 @@ class Image_Metadata_Cruncher_Plugin {
 	 */
 	public function init() {
 	    
-	    // register stylesheet and script for admin
-	    //js_rangy
+	    // register stylesheets and scripts for admin
 	    wp_register_script( "{$this->prefix}_rangy_core", plugins_url( 'js/rangy-core.js', __FILE__ ) );
 	    wp_register_script( "{$this->prefix}_rangy_selectionsaverestore", plugins_url( 'js/rangy-selectionsaverestore.js', __FILE__ ) );
 	    wp_register_script( "{$this->prefix}_script", plugins_url( 'js/script.js', __FILE__ ) );
@@ -612,7 +614,7 @@ class Image_Metadata_Cruncher_Plugin {
 	    $this->section( 1, 'Media form fields:' );
 	    $this->section( 2, 'Custom image meta tags:' );
 	    $this->section( 3, 'Available metadata keywords:' );
-	    $this->section( 4, __( 'How to Use Template Tags:' ) );
+	    $this->section( 4, 'How to Use Template Tags:' );
 	    $this->section( 5, 'About Image Metadata Cruncher:' );
 	    
 	    ///////////////////////////////////
@@ -622,56 +624,64 @@ class Image_Metadata_Cruncher_Plugin {
 	    // Title
 	    // register a new setting...
 	    register_setting(
-	        "{$this->prefix}_title",         		// option group
-	        $this->prefix,               		// option name
-	        array( $this, 'sanitizator' )	// sanitizator
-	    );              
+	        "{$this->prefix}_title",          // option group
+	        $this->prefix,                    // option name
+	        array( $this, 'sanitizer' )       // sanitizer
+	    );     
+		         
 	    // ...and add it to a section
 	    add_settings_field(
-	        "{$this->prefix}_title",         		// field id
-	        'Title:',           		// title
-	        array( $this, 'title_cb' ), // callback
-	        "{$this->prefix}-section-1",     		// section page
-	        "{$this->prefix}_section_1");    		// section id
+	        "{$this->prefix}_title",          // field id
+	        'Title:',                         // title
+	        array( $this, 'title_cb' ),       // callback
+	        "{$this->prefix}-section-1",      // section page
+	        "{$this->prefix}_section_1"       // section id
+		);
 	    
 	    // Alternate text
 	    register_setting(
-	        "{$this->prefix}_alt",           		// option group
-	        $this->prefix,               		// option name
-	        array( $this, 'sanitizator' ) // sanitizator
+	        "{$this->prefix}_alt",            // option group
+	        $this->prefix,                    // option name
+	        array( $this, 'sanitizer' )       // sanitizer
 	    );
+		
 	    add_settings_field(
-	        "{$this->prefix}_alt",           		// field id
-	        'Alternate text:',          // title
-	        array( $this, 'alt_cb' ),   // callback
-	        "{$this->prefix}-section-1",     		// section page
-	        "{$this->prefix}_section_1");    		// section id
+	        "{$this->prefix}_alt",            // field id
+	        'Alternate text:',                // title
+	        array( $this, 'alt_cb' ),         // callback
+	        "{$this->prefix}-section-1",      // section page
+	        "{$this->prefix}_section_1"       // section id
+		);
 	    
 	    // Caption
 	    register_setting(
-	        "{$this->prefix}_caption",       		// option group
-	        $this->prefix,               		// option name
-	        array( $this, 'sanitizator' ) // sanitizator
+	        "{$this->prefix}_caption",        // option group
+	        $this->prefix,                    // option name
+	        array( $this, 'sanitizer')        // sanitizer
 	    );
+		
 	    add_settings_field(
-	        "{$this->prefix}_caption",       		// field id
-	        'Caption:', 				// title
-	        array( $this, 'caption_cb' ),	// callback
-	        "{$this->prefix}-section-1",     			// section page
-	        "{$this->prefix}_section_1");    			// section id
+	        "{$this->prefix}_caption",        // field id
+	        'Caption:',                       // title
+	        array( $this, 'caption_cb' ),     // callback
+	        "{$this->prefix}-section-1",      // section page
+	        "{$this->prefix}_section_1"       // section id
+		);
 	    
 	    // Description
 	    register_setting(
-	        "{$this->prefix}_description",   			// option group
-	        $this->prefix,               			// option name
-	        array( $this, 'sanitizator' )     // sanitizator
+	        "{$this->prefix}_description",    // option group
+	        $this->prefix,                    // option name
+	        array( $this, 'sanitizer' )       // sanitizer
 	    );
+		
 	    add_settings_field(
-	        "{$this->prefix}_description",   			// field id
-	        'Description:',     			// title
-	        array( $this, 'description_cb' ),	// callback
-	        "{$this->prefix}-section-1",     				// section page
-	        "{$this->prefix}_section_1");    				// section id
+	        "{$this->prefix}_description",    // field id
+	        'Description:',                   // title
+	        array( $this, 'description_cb' ), // callback
+	        "{$this->prefix}-section-1",      // section page
+	        "{$this->prefix}_section_1"       // section id
+		);
 	}
 	
 	/**
@@ -685,6 +695,7 @@ class Image_Metadata_Cruncher_Plugin {
 			"{$this->prefix}-options",
 			array( $this, 'options_cb' )
 		);
+		
 		add_action( 'admin_print_scripts-' . $page, array( $this, 'js_rangy_core' ) );
 		add_action( 'admin_print_scripts-' . $page, array( $this, 'js_rangy_selectionsaverestore' ) );
 		add_action( 'admin_print_scripts-' . $page, array( $this, 'js_highlighting' ) );
@@ -701,8 +712,8 @@ class Image_Metadata_Cruncher_Plugin {
 			<?php settings_errors(); ?>
 			<h2 class="nav-tab-wrapper">
 				<?php
-					if ( isset( $_GET[ 'tab' ] ) ) {
-						$active_tab = $_GET[ 'tab' ];
+					if ( isset( $_GET['tab'] ) ) {
+						$active_tab = $_GET['tab'];
 					} else {
 						$active_tab = 'settings';
 					}
@@ -765,7 +776,7 @@ class Image_Metadata_Cruncher_Plugin {
 	// custom post metadata
 	public function section_2() { ?>
 	    <?php $options = get_option( $this->prefix ); ?>
-		<i>Here you can specify your own meta fields that will be saved to the database with the uploaded picture.</i>
+		<p>Here you can specify your own meta fields that will be saved to the database with the uploaded picture.</p>
 		<table id="custom-meta-list" class="widefat">
 			<colgroup>
 				<col class="col-name" />
@@ -777,7 +788,7 @@ class Image_Metadata_Cruncher_Plugin {
 				<th>Template</th>
 				<th>Delete</th>
 			</thead>
-			<?php foreach ($options['custom_meta'] as $key => $value): ?>
+			<?php foreach ( $options['custom_meta'] as $key => $value ): ?>
 				<tr>
 	                <td><input type="text" class="name" value="<?php echo $key ?>" /></td>
 	                <td>
@@ -787,7 +798,7 @@ class Image_Metadata_Cruncher_Plugin {
 	                </td>
 	                <td><button class="button">Remove</button></td>
 				</tr>
-			<?php endforeach ?>
+			<?php endforeach; ?>
 		</table>
 		<div>
 			<button id="add-custom-meta" class="button">Add New Field</button>
@@ -796,7 +807,6 @@ class Image_Metadata_Cruncher_Plugin {
 	
 	// list of available metadata tags
 	public function section_3() { ?>
-		
 		<p>
 			The <strong>Image Metadata Cruncher</strong> template <strong>tags are case insensitive</strong> and so are the metadata keywords.
 			Thus <code>EXIF:ImageHeight</code> is the same as <code>exif:imageheight</code> and <code>EXIF:IMAGEHEIGHT</code>.
@@ -874,11 +884,12 @@ class Image_Metadata_Cruncher_Plugin {
 			Here is a link to the <a target="_blank" href="http://www.iptc.org/std/IIM/4.1/specification/IIMV4.1.pdf">official IPTC metadata specification PDF</a>.
 		</p>
 		<div class="tag-list iptc">
-			<?php foreach ($this->IPTC_MAPPING as $key => $value): ?>
+			<?php // Generate the IPTC list automatically from $this->IPTC_MAPPING ?>
+			<?php foreach ( $this->IPTC_MAPPING as $key => $value ): ?>
 				<?php 
-					$parts = explode('#', $key);
+					$parts = explode( '#', $key );
 					$part1 = $parts[0];
-					$part2 = intval($parts[1]);
+					$part2 = intval( $parts[1] );
 				?>
 				<span class="tag">
 					<span class="first">
@@ -899,7 +910,7 @@ class Image_Metadata_Cruncher_Plugin {
 						endif ?></span>
 					</span>
 				</span>
-			<?php endforeach ?>
+			<?php endforeach; ?>
 		</div>
 		<br />
 		
@@ -918,6 +929,7 @@ class Image_Metadata_Cruncher_Plugin {
 			Here is a link to the <a target="_blank" href="http://www.cipa.jp/english/hyoujunka/kikaku/pdf/DC-008-2010_E.pdf">official EXIF metadata specification PDF</a>.
 		</p>
 		<div class="tag-list exif">
+			<?php // Generate the EXIF list automatically from $this->EXIF_MAPPING ?>
 			<?php foreach ($this->EXIF_MAPPING as $key => $value): ?>
 				<span class="tag">
 					<span class="first">
@@ -925,10 +937,10 @@ class Image_Metadata_Cruncher_Plugin {
 					</span>
 					or
 					<span class="second">
-						<span class="prefix">EXIF</span><span class="colon">:</span><span class="part"><?php echo sprintf("0x%04x", $key); ?></span>
+						<span class="prefix">EXIF</span><span class="colon">:</span><span class="part"><?php echo sprintf( "0x%04x", $key ); ?></span>
 					</span>
 				</span>
-			<?php endforeach ?>
+			<?php endforeach; ?>
 		</div>
 		
 	<?php }
@@ -1425,25 +1437,27 @@ class Image_Metadata_Cruncher_Plugin {
 	
 	public function description_cb() { $this->cb( 'description' ); }
 	
-	public function sanitizator( $input ) {
+	/**
+	 * Escapes dangerous characters from settings form fields
+	 */
+	public function sanitizer( $input ) {
 				
 		$output = array();
 		
-		// iterate through options array
 		foreach ( $input as $key => $value ) {
 			
 			if ( is_array( $value ) ) {
 				// if is array iterate over it...
 				
-				$output[$key] = array();
+				$output[ $key ] = array();
 				foreach ( $value as $k => $v ) {
 					// ...and sanitize both key and value
-					$output[$key][esc_attr( $k )] = esc_attr( $v );
+					$output[ $key ][ esc_attr( $k ) ] = esc_attr( $v );
 				}
 				
 			} else {
 				// sanitize value
-				$output[$key] = esc_attr( $value );
+				$output[ $key ] = esc_attr( $value );
 			}
 		}
 		return $output;
