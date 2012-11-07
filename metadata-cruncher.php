@@ -465,7 +465,6 @@ class Image_Metadata_Cruncher_Plugin {
 		
 	}
 	
-	
 	private function patterns() {
 		
 		// matches key in form abc:def(>ijk)*
@@ -475,7 +474,7 @@ class Image_Metadata_Cruncher_Plugin {
 			[\w.:#]+ # keyword first part
 			(?: # zero or more keyword parts
 				> # part delimiter
-				[\w.#]+ # part
+				[\w.:#]+ # part
 			)*
 		';
 		
