@@ -199,14 +199,16 @@ jQuery(document).ready(function($) {
 		//  with min lenght of 1 and proper handling of "▨" cursor character
 		var wordPattern = /(?:[\w.#▨]{2,}|[^▨\s]{1})/.source;
 		
+		var keywordPartPattern = /(?:[\w.:#▨]{2,}|[^▨\s]{1})/.source;
+		
 		// matches keyword in form of "abc:def(>ijk)*"
 		var keywordPattern = re(
 			wordPattern, // must begin with category prefix
 			':', // followed by colon
-			wordPattern, // followed by at least one part
+			keywordPartPattern, // followed by at least one part
 			'(?:', // followed by optional subparts (>part)
 				'>', // starting with gt
-				wordPattern, // and ending with word
+				keywordPartPattern, // and ending with word
 			')*'
 		).source;
 		
