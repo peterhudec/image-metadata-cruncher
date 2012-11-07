@@ -213,7 +213,7 @@ jQuery(document).ready(function($) {
 		
 		// matches sequence of word characters including period ".", hash "#" and colon ":"
 		//  with min lenght of 1 and proper handling of "▨" cursor character
-		var keywordPartPattern = /(?:[\w.:#▨]{2,}|[^▨\s]{1})/.source;
+		var keywordPartPattern = /(?:[\w.:#▨\-]{2,}|[^▨\s]{1})/.source;
 		
 		// matches keyword in form of "abc:def(>ijk)*"
 		var keywordPattern = re(

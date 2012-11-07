@@ -446,10 +446,10 @@ class Image_Metadata_Cruncher_Plugin {
 		$this->keyword = '
 			[\w]+ # caterory prefix
 			: # colon
-			[\w.:#]+ # keyword first part
+			[\w.:#-]+ # keyword first part
 			(?: # zero or more keyword parts
 				> # part delimiter
-				[\w.:#]+ # part
+				[\w.:#-]+ # part
 			)*
 		';
 		

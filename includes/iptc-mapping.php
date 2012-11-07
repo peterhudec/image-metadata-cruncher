@@ -118,5 +118,5 @@ $this->IPTC_MAPPING = array(
     '7#095' => 'MaximumObjectSize',
     '8#010' => 'SubFile',
     '9#010' => 'ConfirmedObjectSize',
-)
+);
 ?>
