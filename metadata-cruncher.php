@@ -132,7 +132,7 @@ class Image_Metadata_Cruncher_Plugin {
 		// add named copies of UndefinedTag:0x0000 items to $exif array
 		foreach ( $exif as $key => $value ) {
 			// check case insensitively if key begins with "UndefinedTag:"
-			if ( strtolower( substr( $key, 0, 13 ) ) == 'undefin edtag:' ) {
+			if ( strtolower( substr( $key, 0, 13 ) ) == 'undefinedtag:' ) {
 				// get EXIF tag name by ID and convert it to base 16 integer
 				$id = intval( substr( $key, 13 ), 16 );
 				
@@ -253,7 +253,7 @@ class Image_Metadata_Cruncher_Plugin {
 		if ( $category == 'all' ) {
 			
 			// get nested level specified by path
-			$value = $this->explore_path( $this->metadata, $path, $delimiter );
+			$value = $this->explore_path( $this->metadata, $path );
 			
 			switch ( strtolower( $path[0] )  ) {
 				case 'php':
@@ -285,21 +285,19 @@ class Image_Metadata_Cruncher_Plugin {
 		} elseif ( $category == 'iptc' ) {
 			
 			// first construct the key
-			
 			// search for named keyword in the IPTC mapping e.g. "IPTC:FileFormat"
 			$key = array_search( strtolower( $pieces[1] ), array_map( strtolower, $this->IPTC_MAPPING ) );
 			
 			// if nothing found search for IPTC key by ID e.g. "IPTC:2#005"
-			if( ! $key ) {
+			if ( ! $key ) {
 				
 				if ( count( $path ) == 1 ) {
 					
 					// if IPTC part is in n#nnn form try to get it
 					$value = $this->get_metadata( $metadata, $category, $path[0] );
 					
-					if( ! $value ) {
-						// if nothing found
-						// try to search for the IPTC record section by ID
+					if ( ! $value ) {
+						// if nothing found try to search for the IPTC record section by ID
 						
 						// convert ID to to "n#000" e.g. "IPTC:1" becomes "IPTC:1#000"
 						$key = sprintf( "%d#000", $path[0] );
@@ -307,7 +305,8 @@ class Image_Metadata_Cruncher_Plugin {
 					
 				} else {
 					// if path has multiple parts e.g "IPTC:2>5" as a shorthand for "IPTC:2#005"
-					//   pad leading zeros of the second part if missing
+					
+					// pad leading zeros of the second part if missing
 					$key = sprintf( "%d#%03d", $path[0], $path[1] );			
 				}
 			}
@@ -339,23 +338,28 @@ class Image_Metadata_Cruncher_Plugin {
 				$value = $this->get_metadata( $metadata, $category, $key );
 			}
 			
-			// get the level of the value specified in the path
-			$value = $this->explore_path( $value, $path, $delimiter );
-			
 		} else {
 			// try to find anything that is provided
 			$value = $this->get_metadata( $metadata, $category, $pieces[1] );
-			$value = $this->explore_path( $value, $path, $delimiter );
 		}
 		
+		// get the level of the value specified in the path
+		$value = $this->explore_path( $value, $path );
+		
 		if ( is_array( $value ) ) {
+			// if value is array convert it to string
 			$value = implode( $delimiter, $value );
 		}
 		
 		return $value;
 	}
 	
-	private function explore_path( $value, $path, $delimiter, $index = 0 ) {
+	/**
+	 * Traverses value according to path
+	 * 
+	 * @return value found at the level specified by path
+	 */
+	private function explore_path( $value, $path, $index = 0 ) {
 		// if value is array
 		if ( is_array( $value ) ) {
 			$index++;
@@ -368,7 +372,7 @@ class Image_Metadata_Cruncher_Plugin {
 				$value = $value_lower[ $path_lower ];
 				
 				// before returning check if there is not another part of the path
-				return $this->explore_path( $value, $path, $delimiter, $index );
+				return $this->explore_path( $value, $path, $index );
 			} else {
 				return $value;
 			}
