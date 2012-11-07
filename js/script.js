@@ -8,6 +8,7 @@ jQuery(document).ready(function($) {
 	// table with custom metadata templates
 	var $customMeta = $('#custom-meta-list');
 	
+	// Custom meta delete button click handler
 	$customMeta.delegate('button', 'click', function (event){
 			event.preventDefault();
 			
@@ -18,13 +19,13 @@ jQuery(document).ready(function($) {
 			// if template has a name ask for confirmation
 			var value = $name.val();
 			if(value){
-				// if not empty mark and ask
+				// if not empty, mark red and ask
 				$row.addClass('to-be-removed');
 				if(confirm('Are you sure you want to remove the template "' + value + '"?')){
 					// if confirmed remove row
 					$row.remove();
 				}else{
-					// unmark
+					// unmark red
 					$row.removeClass('to-be-removed');
 				}
 			}else{
@@ -34,29 +35,29 @@ jQuery(document).ready(function($) {
 			
 		});
 	
+	// updates name attribute of the custom meta template input to the value of the custom meta name field
 	$customMeta.delegate('input.name', 'keyup', function(event) {
 			$name = $(event.target)
 			var $row = getRow($name);
+			
+			// template field
 			var $template = $row.find('td:nth-child(2) > .hidden-input');
 			
-			// validate
-			var value = $name.val();
-			$template.attr('name', prefix + '[custom_meta]['+ value +']');
+			// update name attribute
+			$template.attr('name', prefix + '[custom_meta]['+ $name.val() +']');
 		})
 	
+	// gets custom meta table row from elements inside the row cells
 	function getRow($element) {
 		return $element.parent().parent();
 	}
 	
+	// creates new custom meta row
 	$('#add-custom-meta').click(function(event) {
 		event.preventDefault();
 		
-		// create cells
-		
-		// on keyup changes name attr of $template
 		var $name = $('<input type="text" class="name" />');
 		var $ce = $('<div class="ce highlighted" contenteditable="true"></div>');
-		//var $template = $('<input type="hidden" class="hidden-input template" />'); // this field will be saved upon submit
 		var $template = $('<textarea class="hidden-input template"></textarea>'); // this field will be saved upon submit
 		var $remove = $('<button class="button">Remove</button>');
 		
@@ -68,41 +69,45 @@ jQuery(document).ready(function($) {
 	
 		
 	///////////////////////////////////////////
-	// Tag syntax highlighting
+	// Template tags syntax highlighting
 	///////////////////////////////////////////
 	
-	// events
+	// Highlights all elements of class="highlighted" on keyup
 	$('#metadata-cruncher').delegate('.highlighted', 'keyup', function(event) {
 		var $target = $(event.target);
+		
+		// highlight and get non HTML text
 		var text = highlight(event);
 		
 		// pass the resulting text to the hidden input form field
 		$out = $target.parent().children('.hidden-input');
-		// but only if that exists
+		// but only if that elements exist
 		if($out.length){
 			$out.html(text);
-			
+						
 			// find and replace all &nbsp; entities which break functionality
 			$out.html($out.html().replace(/&nbsp;/g, ' '));
 		}
 	})
 	
+	// triger the keyup event on content editable elements when rangy is ready
 	rangy.addInitListener(function(r){
-		// triger the keyup event on content editable elements when rangy is ready
 		$('#metadata-cruncher .highlighted').keyup();
 	});
 	
+	// before submitting make sure that all textareas are properly filled out
 	$('#submit').click(function() {
-		// before submitting make sure, that all textareas are properly filled out
 		$('#metadata-cruncher .highlighted').keyup();
 	});
 	
+	// wraps value in HTML span of specified class
 	function wrap(value, className){
 	    if(value) {
 	        return '<span class="' + className + '">' + value + '</span>';
 	    }
 	}
 	
+	// adds wrapped value to the result if value exists
 	function addToResult(result, value, className){
 	    if(value){
 	    	if(className){
@@ -114,10 +119,12 @@ jQuery(document).ready(function($) {
 	    return result;
 	}
 	
+	// shortcut for creating RegExp objects with comments
 	function re() {
 		return RegExp(Array.prototype.join.call(arguments, ''), 'g');
 	}
 	
+	// returns true if the keyup event's keystroke doesn't make problems by syntax highlighting
 	function safeKeystroke(event){
 		
 		var unsafeShiftKeys = [
@@ -152,17 +159,21 @@ jQuery(document).ready(function($) {
 		}
 	}
 	
-	function highlight(event) {	
+	// highlights the event target and returns its non html text
+	function highlight(event) {
+		// only do highlighting when the keystroke doesn't make problems
 		if(safeKeystroke(event)){
-			// do highlighting
-			var $ = jQuery;
+			var $ = jQuery;			
 			
-			
+			// input element
 			var $in = $(event.target);
 			
+			// save carret position
+			//   Rangy inserts boundary markers at the selection boundary
 			var selection = rangy.saveSelection();
 			
-			// replace rangy boundary markers with ▨ and save them to temporary array
+			// replace rangy boundary markers with this unusual unicode character ▨ which survives html to text conversion
+			//   and save them to a temporary array
 			var p = /(<span[\s]*id="selectionBoundary[^<>]*>[^<>]*<\/[\s]*span>)/g;
 			var markers = [];
 			var html = $in.html().replace(p, function(match){
@@ -186,24 +197,27 @@ jQuery(document).ready(function($) {
 		   // update input html
 		   $in.html(newHTML);
 		   
-		   // restore rangy selection
+		   // restore selection
 		   rangy.restoreSelection(selection);
 		   
 		   return $in.text();
 		}
 	}
 	
+	// replaces all valid tags with highlighted html
 	function applyMarkup(input) {
 		
 		// matches sequence of word characters including period "." and hash "#"
 		//  with min lenght of 1 and proper handling of "▨" cursor character
-		var wordPattern = /(?:[\w.#▨]{2,}|[^▨\s]{1})/.source;
+		var prefixPattern = /(?:[\w.#▨]{2,}|[^▨\s]{1})/.source;
 		
+		// matches sequence of word characters including period ".", hash "#" and colon ":"
+		//  with min lenght of 1 and proper handling of "▨" cursor character
 		var keywordPartPattern = /(?:[\w.:#▨]{2,}|[^▨\s]{1})/.source;
 		
 		// matches keyword in form of "abc:def(>ijk)*"
 		var keywordPattern = re(
-			wordPattern, // must begin with category prefix
+			prefixPattern, // must begin with category prefix
 			':', // followed by colon
 			keywordPartPattern, // followed by at least one part
 			'(?:', // followed by optional subparts (>part)

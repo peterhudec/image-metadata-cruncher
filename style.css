@@ -73,14 +73,6 @@ input[type="text"], #metadata-cruncher .ce, #metadata-cruncher .example {
     background-color: #676767;
 }
 
-#metadata-cruncher .bracket {
-	/*
-	font-size: 1.4em;
-    vertical-align: -0.1em;
-    line-height: 0.5em
-    */
-}
-
 /* keys */
 #metadata-cruncher .keys .prefix, .tag-list .prefix {color: #75C1FF}
 #metadata-cruncher .keys .colon, .tag-list .colon  {color: #BAE7FF}
@@ -142,13 +134,3 @@ input[type="text"], #metadata-cruncher .ce, #metadata-cruncher .example {
 #metadata-cruncher .tag-list.exif .second {
 	width: 80px;
 }
-
-
-
-
-
-
-
-
-
-
