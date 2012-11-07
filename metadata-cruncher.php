@@ -871,8 +871,8 @@ class Image_Metadata_Cruncher_Plugin {
 		<h2>IPTC:</h2>
 		<p>
 			The plugin gets the image <strong>IPTC</strong> metadata using the <strong>PHP</strong> <code>iptcparse()</code> function. 
-			This list of <strong>IPTC</strong> tags is based on the
-			<a target="_blank" href="http://owl.phy.queensu.ca/~phil/exiftool/TagNames/IPTC.html#PreObjectData">Phil Harvey's ExifTool IPTC Tag list</a>.
+			This list of <strong>IPTC</strong> tags was automatically generated the
+			<a target="_blank" href="http://owl.phy.queensu.ca/~phil/exiftool/TagNames/IPTC.html">Phil Harvey's ExifTool IPTC Tag list</a>.
 			The <strong>IPTC</strong> metadata tags are organized into sections or records.
 			If you for instance want to access the <strong>IPTC ObjectName</strong> metadata you can use a name based keyword
 			<code>{IPTC:ObjectName}</code>, or since the <strong>ObjectName</strong> tag is stored with the ID
@@ -917,7 +917,7 @@ class Image_Metadata_Cruncher_Plugin {
 		<h2 >EXIF:</h2>
 		<p>
 			The plugin gets the image <strong>EXIF</strong> metadata using the <strong>PHP</strong> <code>exif_read_data()</code> function. 
-			This list of <strong>EXIF</strong> tags is automatically generated from the
+			This list of <strong>EXIF</strong> tags was automatically generated from the
 			<a target="_blank" href="http://owl.phy.queensu.ca/~phil/exiftool/TagNames/EXIF.html">Phil Harvey's ExifTool EXIF Tag list</a>.
 			You can access the same <strong>EXIF</strong> metadata either by name
 			<code>{EXIF:Model}</code> or by ID, which is a hexadecimal number <code>{EXIF:0x0110}</code>.
