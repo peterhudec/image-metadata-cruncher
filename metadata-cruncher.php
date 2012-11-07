@@ -27,15 +27,19 @@ class Image_Metadata_Cruncher_Plugin {
 	 */
 	function __construct() {
 		
-		// the EXIF mapping array has 414 items so it deserves its own file
-		include 'includes/exif-mapping.php';
-		include 'includes/iptc-mapping.php';
+		// the EXIF and IPTC mapping arrays are quite long, so they deserve to be in separate files
+		require_once 'includes/exif-mapping.php';
+		require_once 'includes/iptc-mapping.php';
 		
+		// create regex patterns
 		$this->patterns();
 		
-		// hooks
+		/////////////////////////////////////////////////////////////////////////////////////
+		// WordPress Hooks
+		/////////////////////////////////////////////////////////////////////////////////////
 		
 		// plugin settings hooks
+		
 		add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'plugin_action_links' ), 10, 2 );
 		add_filter( 'plugin_row_meta',  array( $this, 'plugin_row_meta' ), 10, 2 );
 		register_activation_hook( __FILE__, array( $this, 'defaults' ) );
@@ -43,7 +47,7 @@ class Image_Metadata_Cruncher_Plugin {
 		add_action('admin_menu', array( $this, 'options' ) );
 		
 		// plugin functionality hooks
-		add_action( 'wp_handle_upload_prefilter', array( $this, 'upload' ) );
+		add_action( 'wp_handle_upload_prefilter', array( $this, 'wp_handle_upload_prefilter' ) );
 		add_action( 'add_attachment', array( $this, 'add_attachment' ) );
 	}
 	
@@ -55,10 +59,13 @@ class Image_Metadata_Cruncher_Plugin {
 	/**
 	 * The wp_handle_upload_prefilter hook gets triggered before
 	 * wordpress erases all the image metadata
+	 * 
+	 * @return untouched file
 	 */
-	public function upload( $file ){
+	public function wp_handle_upload_prefilter( $file ) {
+			
 		// get meta
-		$this->metadata = $this->parse_meta($file['tmp_name']);
+		$this->metadata = $this->parse_meta( $file['tmp_name'] );
 		
 		// return untouched file
 		return $file;
@@ -66,43 +73,56 @@ class Image_Metadata_Cruncher_Plugin {
 	
 	/**
 	 * The add_attachment hook gets triggered when the attachment post is created
-	 * in Wordpress media uploads are handled as post
+	 * in Wordpress media uploads are handled as posts
 	 */
-	public function add_attachment( $post_ID ){
+	public function add_attachment( $post_ID ) {
+		
+		// get plugin options
 		$options = get_option( $this->prefix );
 		
-		$post = get_post($post_ID);
+		// uploaded image is handled as post by WordPress
+		$post = get_post( $post_ID );
 		
 		// title
-		$post->post_title = $this->render_template($options['title']);
+		$post->post_title = $this->render_template( $options['title'] );
 		// caption
-		$post->post_excerpt = $this->render_template($options['caption']);
+		$post->post_excerpt = $this->render_template( $options['caption'] );
 		// description
-		$post->post_content = $this->render_template($options['description']);
+		$post->post_content = $this->render_template( $options['description'] );
 		// alt is meta attribute
-		update_post_meta($post_ID, '_wp_attachment_image_alt', $this->render_template($options['alt']));
+		update_post_meta( $post_ID, '_wp_attachment_image_alt', $this->render_template( $options['alt'] ) );
 		
-		// add custom metadata
-		foreach ($options['custom_meta'] as $key => $value) {
-		    // update or create
-		    $value = $this->render_template($value);
-			add_post_meta($post_ID, $key, $value, true) or update_post_meta($post_ID, $key, $value);
+		// add custom post meta if any
+		foreach ( $options['custom_meta'] as $key => $value ) {
+			
+			// get value
+			$value = $this->render_template( $value );
+			
+			// update or create the post meta
+		    add_post_meta( $post_ID, $key, $value, true ) or update_post_meta( $post_ID, $key, $value );
 		}
 		
+		// finally update post
 		wp_update_post( $post );
 	}
 	
 	/**
-	 * returns a structured array with all available metadata of supplied image
+	 * Extracts image metadata of the supplied image
+	 * 
+	 * @return structured array with all available metadata
 	 */
 	private function parse_meta( $file ) {
+		
 		// extract metadata from file
+		//  the $meta variable will be populated with it
 		$size = getimagesize( $file, $meta );
 		
 		// parse iptc
-		$iptc = iptcparse( $meta[ 'APP13' ] );
+		//  IPTC is stored in the APP13 key of the extracted metadata
+		$iptc = iptcparse( $meta['APP13'] );
+		
+		// symplify array structure
 		foreach ( $iptc as &$i ) {
-			// symplify array structure
 			$i = $i[0];
 		}
 		
@@ -111,17 +131,19 @@ class Image_Metadata_Cruncher_Plugin {
 		
 		// construct the metadata array
 		$this->metadata = array(
-			'size' => $size,
+			'general' => $size,
 			'IPTC' => $iptc,
 			'EXIF' => $exif
 		);
 		
-		// no need to return but good for testing
+		// no need for return but good for testing
 		return $this->metadata;
 	}
 	
 	/**
-	 * Replaces tags in template string with actual metadata if found
+	 * Replaces template tags in template string
+	 * 
+	 * @return Template string with processed template tags
 	 */
 	private function render_template( $template ){
 		
@@ -140,60 +162,71 @@ class Image_Metadata_Cruncher_Plugin {
 			$template
 		);
 		
-		// replace each found tag with result of the replace_parse_tag method
-		$res = preg_replace_callback($this->pattern, array($this, 'parse_tag'), $template);
+		// replace each found tag with parse_tag method return value
+		$result = preg_replace_callback( $this->pattern, array( $this, 'parse_tag' ), $template );
 		
-	    $res = $res ? $res : $template;    
+		$result = $result ? $result : $template;    
 	        
 		// handle escaped curly brackets
-		$res = str_replace(array('\{', '\}'), array('{', '}'), $res);
+		$result = str_replace(array('\{', '\}'), array('{', '}'), $result);
 		
-		return $res;
+		return $result;
 	}
 	
 	/**
-	 * Returns recursive copy of an array with 
+	 * Converts array keys recursively
+	 * 
+	 * @return recursive copy of an array with lowercase keys
 	 */
 	private function array_keys_to_lower_recursive( $array ) {
 		$array = array_change_key_case( $array, CASE_LOWER );
-		foreach ($array as $key => $value) {
+		foreach ( $array as $key => $value ) {
 			if ( is_array( $value ) ) {
-				$array[$key] = $this->array_keys_to_lower_recursive( $value );
+				// if value is array call this function recursively with the value as argument
+				$array[ $key ] = $this->array_keys_to_lower_recursive( $value );
 			}
 		}
 		return $array;
 	}
 	
-	
+	/**
+	 * Searches for metadata case insensitively by category and value
+	 * 
+	 * @return found value
+	 */
 	private function get_metadata( $metadata, $category, $key ) {
+		// convert to lowercase to allow for case insensitive search
 		$category = strtolower( $category );
 		$key = strtolower( $key );
-		if ( isset( $metadata[$category][$key] ) ) {
-			return $metadata[$category][$key];
+		
+		if ( isset( $metadata[ $category ][ $key ] ) ) {
+			return $metadata[ $category ][ $key ];
 		}
 	}
 	
 	/**
-	 * Searches the $this->metadata property for a metadata field key
-	 * e.g.: IPTC:Caption, IPTC:2.15, EXIF:SerialNumber, EXIF:LensInfo.1
+	 * Analyses template keyword and searches for its value in $this->metadata
+	 * 
+	 * @return found value
 	 */
 	private function get_meta_by_key( $key, $delimiter = NULL ){
+		
 		// convert metadata keys to lowercase to allow for case insensitive keys
 		$metadata = $this->array_keys_to_lower_recursive( $this->metadata );
 		
 		if ( ! $delimiter ) {
-	    	// default delimiter for array values to be joined with
+	    	// if no delimiter specified in the tag, coma and space will be used as default
 	    	$delimiter = ', ';
 	    }
 				
-		// parse key
+		// separate key prefix and suffix
 		$pieces = explode(':', $key);
 		
-		// get case insensitive metadata category: "ALL", "EXIF" or "IPTC"
+		// get case insensitive prefix
 		$category = strtolower( $pieces[0] );
 		
 		if ( count( $pieces ) > 1 ) {
-			// parse path pieces separated by dot
+			// parse path pieces separated by ">" greater than character
 			$path = explode( '>', $pieces[1] );
 		} else {
 			// tag is not valid without anything after colon e.g. "EXIF:"
@@ -204,22 +237,27 @@ class Image_Metadata_Cruncher_Plugin {
 		$value = $key = NULL;
 		
 		if ( $category == 'all' ) {
-				
+			
+			// get nested level specified by path
 			$value = $this->explore_path( $this->metadata, $path, $delimiter );
 			
-			// returns all metadata structured according to key
 			switch ( strtolower( $path[0] )  ) {
 				case 'php':
+					// return found value as human readable PHP array
 					return print_r( $value, TRUE );
 					break;
 					
 				case 'json':
+					// return found value as JSON
 					return json_encode( $value );
 					break;
 					
 				case 'jsonpp':
+					// return found value as pretty printed JSON
+					
 					// JSON_PRETTY_PRINT constant is available since PHP 5.4.0
 					$JSON_PRETTY_PRINT = defined( 'JSON_PRETTY_PRINT' ) ? JSON_PRETTY_PRINT : NULL ;
+					
 					return json_encode( $value, $JSON_PRETTY_PRINT );
 					break;
 					
@@ -231,47 +269,50 @@ class Image_Metadata_Cruncher_Plugin {
 					break;
 			}
 		} elseif ( $category == 'iptc' ) {
-			// if key starts with "IPTC"
+			
+			// first construct the key
 			
 			// search for named keyword in the IPTC mapping e.g. "IPTC:FileFormat"
-			$key = array_search( strtolower( $pieces[1] ), array_map( strtolower, $this->IPTC_MAPPING ));
+			$key = array_search( strtolower( $pieces[1] ), array_map( strtolower, $this->IPTC_MAPPING ) );
 			
-			// if nothing found search for IPTC by code e.g. "IPTC:2#025"...
-			if( !$key ) {
+			// if nothing found search for IPTC key by ID e.g. "IPTC:2#005"
+			if( ! $key ) {
 				
 				if ( count( $path ) == 1 ) {
-						
-					// if IPTC part is in n#nnn form this will get its value if set
+					
+					// if IPTC part is in n#nnn form try to get it
 					$value = $this->get_metadata( $metadata, $category, $path[0] );
 					
-					// if nothing found check the n>nnn form
 					if( ! $value ) {
-						// if only one number specified, fallback to "[n]#000" e.g. "IPTC:1" becomes "IPTC:1#000"
-						$key = sprintf("%d#000", $path[0]);
-						$value = $this->get_metadata( $metadata, $category, $key );
+						// if nothing found
+						// try to search for the IPTC record section by ID
+						
+						// convert ID to to "n#000" e.g. "IPTC:1" becomes "IPTC:1#000"
+						$key = sprintf( "%d#000", $path[0] );
 					}
 					
 				} else {
-					
-					// else pad leading zeros if missing e.g. "IPTC:2.5" becomes "IPTC:2#005"
-					$key = sprintf("%d#%03d", $path[0], $path[1]);
-					
+					// if path has multiple parts e.g "IPTC:2>5" as a shorthand for "IPTC:2#005"
+					//   pad leading zeros of the second part if missing
+					$key = sprintf( "%d#%03d", $path[0], $path[1] );			
 				}
 			}
 			
-			$value = $this->get_metadata( $metadata, $category, $key );
+			if ( ! $value ) {
+				// if value not yet found get it now
+				$value = $this->get_metadata( $metadata, $category, $key );
+			}
 				
 		} elseif ( $category == 'exif' ) {
-			// if key starts with "EXIF" e.g. {EXIF:whatever.whateverelse}
 			
 			// key is the first part of the path
 			$key = $path[0];
 			
-			// try to fin value directly in the keys returned by exif_read_data() function
+			// try to find value directly in the keys returned by exif_read_data() function
 			// e.g. {EXIF:Model}
 			$value = $this->get_metadata( $metadata, $category, $key );
 			
-			if( ! $value ){
+			if ( ! $value ){
 				// some EXIF tags are returned by the exif_read_data() functions like "UndefinedTag:0x####"
 				// so if nothing found try looking up for "UndefinedTag:0x####"
 				
@@ -284,26 +325,27 @@ class Image_Metadata_Cruncher_Plugin {
 				$value = $this->get_metadata( $metadata, $category, $key );
 			}
 			
-			if( ! $value ){
+			if ( ! $value ){
 				// if still no success try again but lookup for the hex ID in the $EXIF_MAPPING
 				
 				// reset key to the first part of the path
 				$key = $path[0];
 				
 				// find the appropriate EXIF hex code in the mapping...
-				$key = array_search( strtolower( $key ), array_map( strtolower, $this->EXIF_MAPPING ));
-				// ...and convert to base 16 integer
+				$key = array_search( strtolower( $key ), array_map( strtolower, $this->EXIF_MAPPING ) );
+				// ...and convert to base 16 integer...
 				$key = intval( $key , 16 );
-				
-				// convert to uppercase string
+				// ..and then to uppercase string
 				$key = strtoupper( dechex( $key ) );
 				
-				// construct key
+				// construct the key
 				$key = "UndefinedTag:0x$key";
 				
-				// and search for it in the extracted metadata
+				// get its value
 				$value = $this->get_metadata( $metadata, $category, $key );
 			}
+			
+			// now that we have the key, we can get its value
 			$value = $this->explore_path( $value, $path, $delimiter );
 		} else {
 			// try to find anything that is provided
