@@ -219,8 +219,8 @@ class Image_Metadata_Cruncher_Plugin {
 	    	$delimiter = ', ';
 	    }
 				
-		// separate key prefix and suffix
-		$pieces = explode(':', $key);
+		// separate key prefix and suffix on the first occurence of a colon
+		$pieces = explode( ':', $key, 2 );
 		
 		// get case insensitive prefix
 		$category = strtolower( $pieces[0] );
@@ -331,15 +331,37 @@ class Image_Metadata_Cruncher_Plugin {
 				// reset key to the first part of the path
 				$key = $path[0];
 				
+				// find the appropriate EXIF hex code in the mapping...
+				$key = array_search( strtolower( $key ), array_map( strtolower, $this->EXIF_MAPPING ) );
+				// ...and convert to base 16 integer...
+				$key = intval( $key , 16 );
+				// ..and then to uppercase string
+				$key = strtoupper( dechex( $key ) );
+				
+				// construct the key
+				$key = "UndefinedTag:0x$key";
+				
+				// get its value
+				$value = $this->get_metadata( $metadata, $category, $key );
+			}
+			
+			if ( ! $value ){
+				// if still no success try again but lookup for the hex ID in the $EXIF_MAPPING
+				
+				// reset key to the first part of the path
+				$key = $path[0];
+				
 				// convert the hex ID string to base 16 integer
 				$key = intval( $key , 16 );
 				
+				// get the name by key
 				$key = $this->EXIF_MAPPING[ $key ];
 				
 				// get its value
 				$value = $this->get_metadata( $metadata, $category, $key );
 			}
 			
+			//TODO:The path should be resolved before
 			// get the level of the value specified in the path
 			$value = $this->explore_path( $value, $path, $delimiter );
 			
@@ -450,7 +472,7 @@ class Image_Metadata_Cruncher_Plugin {
 		$this->keyword = '
 			[\w]+ # caterory prefix
 			: # colon
-			[\w.#]+ # keyword first part
+			[\w.:#]+ # keyword first part
 			(?: # zero or more keyword parts
 				> # part delimiter
 				[\w.#]+ # part
