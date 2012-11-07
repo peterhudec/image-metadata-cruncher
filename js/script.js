@@ -344,6 +344,7 @@ jQuery(document).ready(function($) {
 		});
 	}
 	
+	// highlites dollar sign inside success value string but only if it's not escaped with backslash
 	function processSuccessValue(content){
 		if(content){
 			var p = re(
@@ -360,8 +361,8 @@ jQuery(document).ready(function($) {
 		}
 	}
 	
+	// highlites tag keywords group
 	function processKeys(content) {
-		
 		// matches keys, captures prefix, colon, key and pipe
 		var p = re(
 			'([^:\\s]+)', // prefix
@@ -383,6 +384,7 @@ jQuery(document).ready(function($) {
 		});
 	}
 	
+	// highlites tag keywords
 	function processKey(content) {
 		
 		// matches key suffix, captures part and qt character
