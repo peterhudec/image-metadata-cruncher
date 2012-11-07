@@ -65,7 +65,7 @@ class Image_Metadata_Cruncher_Plugin {
 	public function wp_handle_upload_prefilter( $file ) {
 			
 		// get meta
-		$this->metadata = $this->parse_meta( $file['tmp_name'] );
+		$this->metadata = $this->extract_metadata( $file['tmp_name'] );
 		
 		// return untouched file
 		return $file;
@@ -111,7 +111,7 @@ class Image_Metadata_Cruncher_Plugin {
 	 * 
 	 * @return structured array with all available metadata
 	 */
-	private function parse_meta( $file ) {
+	private function extract_metadata( $file ) {
 		
 		// extract metadata from file
 		//  the $meta variable will be populated with it
@@ -129,9 +129,23 @@ class Image_Metadata_Cruncher_Plugin {
 		// parse exif
 		$exif = exif_read_data( $file );
 		
+		// add named copies of UndefinedTag:0x0000 items to $exif array
+		foreach ( $exif as $key => $value ) {
+			// check case insensitively if key begins with "UndefinedTag:"
+			if ( strtolower( substr( $key, 0, 13 ) ) == 'undefin edtag:' ) {
+				// get EXIF tag name by ID and convert it to base 16 integer
+				$id = intval( substr( $key, 13 ), 16 );
+				
+				if ( isset( $this->EXIF_MAPPING[ $id ] ) ) {
+					// create copy with EXIF tag name as key
+					$exif[ $this->EXIF_MAPPING[ $id ] ] = $value;
+				}
+			}
+		}
+		
 		// construct the metadata array
 		$this->metadata = array(
-			'general' => $size,
+			'Image' => $size,
 			'IPTC' => $iptc,
 			'EXIF' => $exif
 		);
@@ -312,7 +326,7 @@ class Image_Metadata_Cruncher_Plugin {
 			// e.g. {EXIF:Model}
 			$value = $this->get_metadata( $metadata, $category, $key );
 			
-			if ( ! $value ){
+			if ( ! $value ) {
 				// some EXIF tags are returned by the exif_read_data() functions like "UndefinedTag:0x####"
 				// so if nothing found try looking up for "UndefinedTag:0x####"
 				
@@ -325,43 +339,6 @@ class Image_Metadata_Cruncher_Plugin {
 				$value = $this->get_metadata( $metadata, $category, $key );
 			}
 			
-			if ( ! $value ){
-				// if still no success try again but lookup for the hex ID in the $EXIF_MAPPING
-				
-				// reset key to the first part of the path
-				$key = $path[0];
-				
-				// find the appropriate EXIF hex code in the mapping...
-				$key = array_search( strtolower( $key ), array_map( strtolower, $this->EXIF_MAPPING ) );
-				// ...and convert to base 16 integer...
-				$key = intval( $key , 16 );
-				// ..and then to uppercase string
-				$key = strtoupper( dechex( $key ) );
-				
-				// construct the key
-				$key = "UndefinedTag:0x$key";
-				
-				// get its value
-				$value = $this->get_metadata( $metadata, $category, $key );
-			}
-			
-			if ( ! $value ){
-				// if still no success try again but lookup for the hex ID in the $EXIF_MAPPING
-				
-				// reset key to the first part of the path
-				$key = $path[0];
-				
-				// convert the hex ID string to base 16 integer
-				$key = intval( $key , 16 );
-				
-				// get the name by key
-				$key = $this->EXIF_MAPPING[ $key ];
-				
-				// get its value
-				$value = $this->get_metadata( $metadata, $category, $key );
-			}
-			
-			//TODO:The path should be resolved before
 			// get the level of the value specified in the path
 			$value = $this->explore_path( $value, $path, $delimiter );
 			
@@ -386,7 +363,7 @@ class Image_Metadata_Cruncher_Plugin {
 				// if index set in the path, get its value
 				
 				// temporarily convert value and path to lowercase to allow for key insensitive lookup 
-				$value_lower = $this->array_keys_to_lower_recursive( $value );
+				$value_lower = array_change_key_case( $value, CASE_LOWER );
 				$path_lower = strtolower( $path[ $index ] );
 				$value = $value_lower[ $path_lower ];
 				
@@ -406,11 +383,6 @@ class Image_Metadata_Cruncher_Plugin {
 		if ( isset( $match[0] ) ) {
 			return $match[0];
 		}
-	}
-	
-	private function u($value='')
-	{
-		
 	}
 	
 	/**
