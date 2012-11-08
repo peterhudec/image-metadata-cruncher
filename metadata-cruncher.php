@@ -121,6 +121,14 @@ class Image_Metadata_Cruncher_Plugin {
 		//  IPTC is stored in the APP13 key of the extracted metadata
 		$iptc = iptcparse( $meta['APP13'] );
 		
+		// add named copies to all found IPTC items
+		foreach ( $iptc as $key => $value ) {
+			if ( isset( $this->IPTC_MAPPING[ $key ] ) ) {
+				$name = $this->IPTC_MAPPING[ $key ];
+				$iptc[ $name ] = $value;
+			}
+		}
+		
 		// symplify array structure
 		foreach ( $iptc as &$i ) {
 			$i = $i[0];
@@ -138,7 +146,8 @@ class Image_Metadata_Cruncher_Plugin {
 				
 				if ( isset( $this->EXIF_MAPPING[ $id ] ) ) {
 					// create copy with EXIF tag name as key
-					$exif[ $this->EXIF_MAPPING[ $id ] ] = $value;
+					$name = $this->EXIF_MAPPING[ $id ];
+					$exif[ $name ] = $value;
 				}
 			}
 		}
@@ -821,7 +830,7 @@ class Image_Metadata_Cruncher_Plugin {
 			For example
 			<code>{ALL:php>iptc}</code>,
 			<code>{ALL:json>exif}</code>,
-			<code>{ALL:jsonpp>iptc>caption}</code>,
+			<code>{ALL:jsonpp>iptc>caption-abstract}</code>,
 			<code>{ALL:php>exif>computed}</code>,
 			<code>{ALL:json>exif>computed>ApertureFNumber}</code>,
 			<code>{ALL:jsonpp>exif>0xA432>3}</code> and so forth.
