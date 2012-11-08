@@ -1337,7 +1337,7 @@ class Image_Metadata_Cruncher_Plugin {
 		</div>
 		<br />
 		<div class="ce highlighted" >
-			{ IPTC:ObjectName } is the same as { IPTC:2#005 } or { IPTC:2>005 } or { IPTC:2>5 }
+			{ IPTC:ObjectName } is the same as { IPTC:2#005 }
 		</div>
 		<br />
 		<div class="ce highlighted" >
