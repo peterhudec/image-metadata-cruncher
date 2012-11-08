@@ -315,40 +315,6 @@ class Image_Metadata_Cruncher_Plugin {
 				default:
 					break;
 			}
-		} elseif ( $category == 'iptc' ) {
-			
-			// first construct the key
-			// search for named keyword in the IPTC mapping e.g. "IPTC:FileFormat"
-			$key = array_search( strtolower( $pieces[1] ), array_map( strtolower, $this->IPTC_MAPPING ) );
-			
-			// if nothing found search for IPTC key by ID e.g. "IPTC:2#005"
-			if ( ! $key ) {
-				
-				if ( count( $path ) == 1 ) {
-					
-					// if IPTC part is in n#nnn form try to get it
-					$value = $this->get_metadata( $metadata, $category, $path[0] );
-					
-					if ( ! $value ) {
-						// if nothing found try to search for the IPTC record section by ID
-						
-						// convert ID to to "n#000" e.g. "IPTC:1" becomes "IPTC:1#000"
-						$key = sprintf( "%d#000", $path[0] );
-					}
-					
-				} else {
-					// if path has multiple parts e.g "IPTC:2>5" as a shorthand for "IPTC:2#005"
-					
-					// pad leading zeros of the second part if missing
-					$key = sprintf( "%d#%03d", $path[0], $path[1] );			
-				}
-			}
-			
-			if ( ! $value ) {
-				// if value not yet found get it now
-				$value = $this->get_metadata( $metadata, $category, $key );
-			}
-				
 		} elseif ( $category == 'exif' ) {
 			
 			// key is the first part of the path
@@ -372,7 +338,7 @@ class Image_Metadata_Cruncher_Plugin {
 			}
 			
 		} else {
-			// try to find anything that is provided
+			// try to find anything that is provided (handles IPTC too)
 			$value = $this->get_metadata( $metadata, $category, $pieces[1] );
 		}
 		
@@ -904,26 +870,20 @@ class Image_Metadata_Cruncher_Plugin {
 		<h2>IPTC:</h2>
 		<p>
 			The plugin gets the image <strong>IPTC</strong> metadata using the <strong>PHP</strong> <code>iptcparse()</code> function. 
-			This list of <strong>IPTC</strong> tags was automatically generated the
-			<a target="_blank" href="http://owl.phy.queensu.ca/~phil/exiftool/TagNames/IPTC.html">Phil Harvey's ExifTool IPTC Tag list</a>.
-			The <strong>IPTC</strong> metadata tags are organized into sections or records.
-			If you for instance want to access the <strong>IPTC ObjectName</strong> metadata you can use a name based keyword
-			<code>{IPTC:ObjectName}</code>, or since the <strong>ObjectName</strong> tag is stored with the ID
-			<code>5</code> in the <strong>IPTC ApplicationRecord section</strong> with the ID
-			<code>2</code>, you can also access it with
-			<code>{IPTC:2#005}</code>, or <code>{IPTC:2>5}</code>.
+			You can access the IPTC metadata either by name <code>{IPTC:City}</code>, or
+			by <strong>ID</strong> <code>{IPTC:2#090}</code>.
+			
 			Use the <code>{ALL:PHP}</code> template tag to get a list of all the metadata the plugin can read from the image,
-			or <code>{ALL:PHP>IPTC}</code> to get the result of the <code>iptcparse()</code> function.
+			or <code>{ALL:PHP>IPTC}</code> to get only the <strong>IPTC</strong> metadata.
 			Here is a link to the <a target="_blank" href="http://www.iptc.org/std/IIM/4.1/specification/IIMV4.1.pdf">official IPTC metadata specification PDF</a>.
+		</p>
+		<p>
+			This list of <strong>IPTC</strong> tags was automatically generated from the
+			<a target="_blank" href="http://owl.phy.queensu.ca/~phil/exiftool/TagNames/IPTC.html">Phil Harvey's ExifTool IPTC Tag list</a>.
 		</p>
 		<div class="tag-list iptc">
 			<?php // Generate the IPTC list automatically from $this->IPTC_MAPPING ?>
 			<?php foreach ( $this->IPTC_MAPPING as $key => $value ): ?>
-				<?php 
-					$parts = explode( '#', $key );
-					$part1 = $parts[0];
-					$part2 = intval( $parts[1] );
-				?>
 				<span class="tag">
 					<span class="first">
 						<span class="prefix">IPTC</span><span class="colon">:</span><span class="part"><?php echo $value; ?></span>						
@@ -931,16 +891,6 @@ class Image_Metadata_Cruncher_Plugin {
 					or
 					<span class="second">
 						<span class="prefix">IPTC</span><span class="colon">:</span><span class="part"><?php echo $key; ?></span>
-					</span>
-					or
-					<span class="third">
-						<span class="prefix">IPTC</span><?php
-						?><span class="colon">:</span><?php
-						?><span class="part"><?php echo $part1; ?></span><?php
-						if ( $part2 ):
-						?><span class="gt">&gt;</span><?php
-						?><span class="part"><?php echo $part2; ?><?php
-						endif ?></span>
 					</span>
 				</span>
 			<?php endforeach; ?>
@@ -950,16 +900,18 @@ class Image_Metadata_Cruncher_Plugin {
 		<h2 >EXIF:</h2>
 		<p>
 			The plugin gets the image <strong>EXIF</strong> metadata using the <strong>PHP</strong> <code>exif_read_data()</code> function. 
-			This list of <strong>EXIF</strong> tags was automatically generated from the
-			<a target="_blank" href="http://owl.phy.queensu.ca/~phil/exiftool/TagNames/EXIF.html">Phil Harvey's ExifTool EXIF Tag list</a>.
 			You can access the same <strong>EXIF</strong> metadata either by name
 			<code>{EXIF:Model}</code> or by ID, which is a hexadecimal number <code>{EXIF:0x0110}</code>.
 			If you think that the uploaded image has any <strong>EXIF</strong> metadata not listed here
 			you can still try to get it by name <code>{EXIF:FooBar}</code> or ID <code>{EXIF:0x123456}</code>
 			and if the <strong>PHP</strong> <code>exif_read_data()</code> function finds it, the template tag will return it.
 			Use the <code>{ALL:PHP}</code> template tag to get a list of all the metadata the plugin can read from the image,
-			or <code>{ALL:PHP>EXIF}</code> to get the result of the <code>exif_read_data()</code> function.
+			or <code>{ALL:PHP>EXIF}</code> to get only the <stron>EXIF</strong> metadata.
 			Here is a link to the <a target="_blank" href="http://www.cipa.jp/english/hyoujunka/kikaku/pdf/DC-008-2010_E.pdf">official EXIF metadata specification PDF</a>.
+		</p>
+		<p>
+			This list of <strong>EXIF</strong> tags was automatically generated from the
+			<a target="_blank" href="http://owl.phy.queensu.ca/~phil/exiftool/TagNames/EXIF.html">Phil Harvey's ExifTool EXIF Tag list</a>.
 		</p>
 		<div class="tag-list exif">
 			<?php // Generate the EXIF list automatically from $this->EXIF_MAPPING ?>
