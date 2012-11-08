@@ -114,23 +114,10 @@ input[type="text"], #metadata-cruncher .ce, #metadata-cruncher .example {
 	padding: 2px 6px;
 }
 
-#metadata-cruncher .tag-list.iptc .first {
+#metadata-cruncher .tag-list .first {
 	width: 220px;
 }
 
-#metadata-cruncher .tag-list.iptc .second {
+#metadata-cruncher .tag-list .second {
 	width: 70px;
-}
-
-#metadata-cruncher .tag-list.iptc .third {
-	width: 70px;
-}
-
-
-#metadata-cruncher .tag-list.exif .first {
-	width: 210px;
-}
-
-#metadata-cruncher .tag-list.exif .second {
-	width: 80px;
 }
