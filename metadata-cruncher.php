@@ -56,6 +56,21 @@ class Image_Metadata_Cruncher_Plugin {
 	// Functionality
 	/////////////////////////////////////////////////////////////////////////////////////
 	
+	private function insert_next_to_key( &$array, $key, $value, $insert_before = FALSE ) {
+		
+		// get position of the index in the array
+		$offset = array_search( $key, array_keys( $array ) );
+		
+		if ( ! $insert_before ) {
+			$offset++;
+		}
+		
+		$left = array_slice( $array, 0, $offset );
+		$right = array_slice( $array, $offset );
+		
+		$array = array_merge( $left, $value, $right );
+	}
+	
 	/**
 	 * The wp_handle_upload_prefilter hook gets triggered before
 	 * wordpress erases all the image metadata
@@ -121,18 +136,26 @@ class Image_Metadata_Cruncher_Plugin {
 		//  IPTC is stored in the APP13 key of the extracted metadata
 		$iptc = iptcparse( $meta['APP13'] );
 		
-		// add named copies to all found IPTC items
-		foreach ( $iptc as $key => $value ) {
-			if ( isset( $this->IPTC_MAPPING[ $key ] ) ) {
-				$name = $this->IPTC_MAPPING[ $key ];
-				$iptc[ $name ] = $value;
-			}
-		}
-		
 		// symplify array structure
 		foreach ( $iptc as &$i ) {
 			$i = $i[0];
 		}
+		
+		// add named copies to all found IPTC items
+		foreach ( $iptc as $key => $value ) {
+			if ( isset( $this->IPTC_MAPPING[ $key ] ) ) {
+				$name = $this->IPTC_MAPPING[ $key ];
+				
+				// add "Caption" alias to "Caption-Caption-Abstract"
+				if ( $key == '2#120' ) {
+					$this->insert_next_to_key( $iptc, $key, array( 'Caption' => $value ) );
+				}
+				
+				$this->insert_next_to_key( $iptc, $key, array( $name => $value ) );
+			}
+		}
+		
+		
 		
 		// parse exif
 		$exif = exif_read_data( $file );
@@ -147,7 +170,8 @@ class Image_Metadata_Cruncher_Plugin {
 				if ( isset( $this->EXIF_MAPPING[ $id ] ) ) {
 					// create copy with EXIF tag name as key
 					$name = $this->EXIF_MAPPING[ $id ];
-					$exif[ $name ] = $value;
+					//$exif[ $name ] = $value;
+					$this->insert_next_to_key( $exif, $key, array( $name => $value ) );
 				}
 			}
 		}
