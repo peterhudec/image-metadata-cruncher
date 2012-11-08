@@ -810,7 +810,7 @@ class Image_Metadata_Cruncher_Plugin {
 	// list of available metadata tags
 	public function section_3() { ?>
 		<p>
-			The <strong>Image Metadata Cruncher</strong> template <strong>tags are case insensitive</strong> and so are the metadata keywords.
+			The <strong>Image Metadata Cruncher</strong> template tags are <strong>case insensitive</strong> and so are the metadata keywords.
 			Thus <code>EXIF:ImageHeight</code> is the same as <code>exif:imageheight</code> and <code>EXIF:IMAGEHEIGHT</code>.
 		</p>
 		
@@ -882,7 +882,7 @@ class Image_Metadata_Cruncher_Plugin {
 		</p>
 		<p>
 			This list of <strong>IPTC</strong> tags was automatically generated from the
-			<a target="_blank" href="http://owl.phy.queensu.ca/~phil/exiftool/TagNames/IPTC.html">Phil Harvey's ExifTool IPTC Tag list</a>.
+			<a target="_blank" href="http://owl.phy.queensu.ca/~phil/exiftool/TagNames/IPTC.html">Phil Harvey's ExifTool IPTC Tag List</a>.
 		</p>
 		<div class="tag-list iptc">
 			<?php // Generate the IPTC list automatically from $this->IPTC_MAPPING ?>
@@ -914,7 +914,7 @@ class Image_Metadata_Cruncher_Plugin {
 		</p>
 		<p>
 			This list of <strong>EXIF</strong> tags was automatically generated from the
-			<a target="_blank" href="http://owl.phy.queensu.ca/~phil/exiftool/TagNames/EXIF.html">Phil Harvey's ExifTool EXIF Tag list</a>.
+			<a target="_blank" href="http://owl.phy.queensu.ca/~phil/exiftool/TagNames/EXIF.html">Phil Harvey's ExifTool EXIF Tag List</a>.
 		</p>
 		<div class="tag-list exif">
 			<?php // Generate the EXIF list automatically from $this->EXIF_MAPPING ?>
@@ -1104,8 +1104,6 @@ class Image_Metadata_Cruncher_Plugin {
                 )
             (...rest truncated for brevity...)
         )
-)
-
 )</pre></div>
 		
 		
