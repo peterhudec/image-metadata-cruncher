@@ -350,6 +350,9 @@ class Image_Metadata_Cruncher_Plugin {
 			$value = implode( $delimiter, $value );
 		}
 		
+		// some IPTC metadata contain the  End Of Transmission character, which strips everythig after it
+		$value = str_replace("", '', $value);
+		
 		return $value;
 	}
 	
@@ -1057,7 +1060,7 @@ class Image_Metadata_Cruncher_Plugin {
 		</p>
 		<div class="example ok"><pre style="overflow: hidden">Array
 (
-    [size] => Array
+    [Image] => Array
         (
             [0] => 589
             [1] => 632
@@ -1071,15 +1074,18 @@ class Image_Metadata_Cruncher_Plugin {
     [IPTC] => Array
         (
             [1#005] => Destination
+            [Destination] => Destination
+            [1#000] => �
+            [EnvelopeRecordVersion] => �
             [1#050] => ProductID
-            [2#122] => Writer-Editor
-            (...truncated for brevity...)
+            [ProductID] => ProductID
+            (...rest truncated for brevity...)
         )
 
     [EXIF] => Array
         (
-            [FileName] => phpXIEcbo
-            [FileDateTime] => 1351882303
+            [FileName] => phpbNUtQp
+            [FileDateTime] => 1352388440
             [FileSize] => 145110
             [FileType] => 2
             [MimeType] => image/jpeg
@@ -1096,30 +1102,9 @@ class Image_Metadata_Cruncher_Plugin {
                     [Thumbnail.FileType] => 2
                     [Thumbnail.MimeType] => image/jpeg
                 )
-
-            [ImageDescription] => A long exposure photo made available 13 May 2012 shows a bull rider trying to hold onto a bull during the first ever Bull Riding Slovakia Cup in Bratislava, Slovakia, 12 May 2012. EPA/PETER HUDEC
-            [Make] => Canon
-            [THUMBNAIL] => Array
-                (
-                    [Compression] => 6
-                    [XResolution] => 72/1
-                    [YResolution] => 72/1
-                    [ResolutionUnit] => 2
-                    [JPEGInterchangeFormat] => 984
-                    [JPEGInterchangeFormatLength] => 12614
-                )
-
-            [ExposureTime] => 1/5
-            [UndefinedTag:0xA432] => Array
-                (
-                    [0] => 70/1
-                    [1] => 200/1
-                    [2] => 0/0
-                    [3] => 0/0
-                )
-			[UndefinedTag:0xA434] => EF70-200mm f/2.8L USM
-			(...truncated for brevity...)
+            (...rest truncated for brevity...)
         )
+)
 
 )</pre></div>
 		
