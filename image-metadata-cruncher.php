@@ -691,8 +691,8 @@ class Image_Metadata_Cruncher_Plugin {
 	 */
 	public function options() {
 		$page = add_plugins_page(
-			'Metadata Cruncher',
-			'Metadata Cruncher',
+			'Image Metadata Cruncher',
+			'Image Metadata Cruncher',
 			'administrator',
 			"{$this->prefix}-options",
 			array( $this, 'options_cb' )
