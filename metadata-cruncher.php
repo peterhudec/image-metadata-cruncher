@@ -778,7 +778,7 @@ class Image_Metadata_Cruncher_Plugin {
 	// custom post metadata
 	public function section_2() { ?>
 	    <?php $options = get_option( $this->prefix ); ?>
-		<p>Here you can specify your own meta fields that will be saved to the database with the uploaded picture.</p>
+		<p>Here you can specify your own meta fields that will be saved to the database with the uploaded image.</p>
 		<table id="custom-meta-list" class="widefat">
 			<colgroup>
 				<col class="col-name" />
