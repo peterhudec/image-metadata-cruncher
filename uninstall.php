@@ -4,5 +4,5 @@ if ( !defined( 'WP_UNINSTALL_PLUGIN' ) )
     exit ();
 
 // else cleanup
-delete_option( $image_metadata_cruncher_plugin->prefix );
+delete_option( 'image_metadata_cruncher' );
 ?>
