@@ -523,7 +523,6 @@ class Image_Metadata_Cruncher_Plugin {
 	// Settings
 	/////////////////////////////////////////////////////////////////////////////////////
 	
-	private $settings_slug = 'mc-options';
 	public $prefix = 'image_metadata_cruncher';
 	
 	/**
@@ -575,7 +574,7 @@ class Image_Metadata_Cruncher_Plugin {
 	 * Default plugin options
 	 */
 	public function defaults() {
-		add_option( $this->option_name, array(
+		add_option( $this->prefix, array(
 			'title' => '{ IPTC:Headline }',
 			'alt' => '',
 			'caption' => '',
@@ -614,7 +613,7 @@ class Image_Metadata_Cruncher_Plugin {
 	    $this->section( 1, 'Media form fields:' );
 	    $this->section( 2, 'Custom image meta tags:' );
 	    $this->section( 3, 'Available metadata keywords:' );
-	    $this->section( 4, 'How to Use Template Tags:' );
+	    $this->section( 4, 'How to Use Template Tags' );
 	    $this->section( 5, 'About Image Metadata Cruncher:' );
 	    
 	    ///////////////////////////////////
@@ -726,7 +725,7 @@ class Image_Metadata_Cruncher_Plugin {
 				?>
 				<a href="?page=image_metadata_cruncher-options&tab=settings" class="nav-tab <?php active_tab( 'settings', $active_tab ); ?>">Settings</a>
 				<a href="?page=image_metadata_cruncher-options&tab=metadata" class="nav-tab <?php active_tab( 'metadata', $active_tab ); ?>">Available Metadata</a>
-				<a href="?page=image_metadata_cruncher-options&tab=usage" class="nav-tab <?php active_tab( 'usage', $active_tab ); ?>"><?php _e( 'How to Use Template Tags:' ) ?></a>
+				<a href="?page=image_metadata_cruncher-options&tab=usage" class="nav-tab <?php active_tab( 'usage', $active_tab ); ?>"><?php _e( 'How to Use Template Tags' ) ?></a>
 				<a href="?page=image_metadata_cruncher-options&tab=about" class="nav-tab <?php active_tab( 'about', $active_tab ); ?>">About</a>
 			</h2>
 			
