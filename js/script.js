@@ -95,9 +95,15 @@ jQuery(document).ready(function($) {
 		$('#metadata-cruncher .highlighted').keyup();
 	});
 	
-	// before submitting make sure that all textareas are properly filled out
-	$('#submit').click(function() {
+	// before submitting...
+	$('#submit').click(function(event) {
+		// ...make sure that all textareas are properly filled out
 		$('#metadata-cruncher .highlighted').keyup();
+		
+		// ...remove all custom metadata rows with empty name field
+		getRow($('#custom-meta-list .name').filter(function(){
+			return $(this).val() == "";
+		})).remove();		
 	});
 	
 	// wraps value in HTML span of specified class
