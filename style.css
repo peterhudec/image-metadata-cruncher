@@ -19,6 +19,14 @@ input[type="text"] {
 	width: 200px
 }
 
+button {
+    height: 22px
+}
+
+tr {
+    height: 42px
+}
+
 .hidden-input {
 	display: none;
 	visibility: hidden;
@@ -31,13 +39,13 @@ input[type="text"], #metadata-cruncher .ce, #metadata-cruncher .example {
 	min-height: 20px;
 	border: 1px solid #DFDFDF;
 	vertical-align: middle;
-	border-radius: 6px;
+	border-radius: 10px;
 	background-color: white;
 	font-family: sans-serif;
+	padding: 1px 3px;
 	margin: 1px;
-	padding: 3px;
 	outline: 0;
-	line-height: 24px;
+	line-height: 25px;
 	font-weight: bold;
 }
 
