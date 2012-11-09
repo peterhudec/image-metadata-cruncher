@@ -576,12 +576,10 @@ class Image_Metadata_Cruncher_Plugin {
 	 */
 	public function defaults() {
 		add_option( $this->option_name, array(
-			'title' => '',
+			'title' => '{ IPTC:Headline }',
 			'alt' => '',
 			'caption' => '',
-			'description' => '',
-			'file_url' => '',
-			'image_size' => '',
+			'description' => '{ IPTC:Caption | EXIF:ImageDescription }',
 			'custom_meta' => array()
 		) );
 	}
