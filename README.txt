@@ -23,7 +23,7 @@ in which fields of the form they appear.
 Moreover, the plugin's simple templating system allows you to prefill the form with complex strings like
 *Image was taken with Canon 7D, exposure was 1/125s and aperture was f/2.8*.
 
-You can even specify custom **post meta** that will be saved with the image to the database.
+You can even extract metadata to unlimited custom **post meta** that will be saved with the image to the database.
 
 == Installation ==
 
@@ -31,8 +31,9 @@ Copy the **image-metadata-cruncher** folder into the plugins directory and activ
 
 == Screenshots ==
 
-1. Media upload form
-2. Plugin options
+1. Plugin Settings
+2. Available Metadata
+3. How to Use Template tags
 
 == Changelog ==
 
