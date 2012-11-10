@@ -155,25 +155,37 @@ class Image_Metadata_Cruncher_Plugin {
 			}
 		}
 		
-		
-		
 		// parse exif
-		$exif = exif_read_data( $file );
 		
-		// add named copies of UndefinedTag:0x0000 items to $exif array
-		foreach ( $exif as $key => $value ) {
-			// check case insensitively if key begins with "UndefinedTag:"
-			if ( strtolower( substr( $key, 0, 13 ) ) == 'undefinedtag:' ) {
-				// get EXIF tag name by ID and convert it to base 16 integer
-				$id = intval( substr( $key, 13 ), 16 );
-				
-				if ( isset( $this->EXIF_MAPPING[ $id ] ) ) {
-					// create copy with EXIF tag name as key
-					$name = $this->EXIF_MAPPING[ $id ];
-					//$exif[ $name ] = $value;
-					$this->insert_next_to_key( $exif, $key, array( $name => $value ) );
+		// the exif_read_data() function throws a warning if it is passed an unsupported file format.
+		// This warning is impossible to catch so we have to check the file mime type manually
+		$safe_file_formats = array(
+			'image/jpg',
+			'image/jpeg',
+			'image/tif',
+			'image/tiff',
+		);
+		
+		if ( in_array( $size['mime'], $safe_file_formats ) ) {
+			
+			$exif = exif_read_data( $file );
+			// add named copies of UndefinedTag:0x0000 items to $exif array
+			foreach ( $exif as $key => $value ) {
+				// check case insensitively if key begins with "UndefinedTag:"
+				if ( strtolower( substr( $key, 0, 13 ) ) == 'undefinedtag:' ) {
+					// get EXIF tag name by ID and convert it to base 16 integer
+					$id = intval( substr( $key, 13 ), 16 );
+					
+					if ( isset( $this->EXIF_MAPPING[ $id ] ) ) {
+						// create copy with EXIF tag name as key
+						$name = $this->EXIF_MAPPING[ $id ];
+						//$exif[ $name ] = $value;
+						$this->insert_next_to_key( $exif, $key, array( $name => $value ) );
+					}
 				}
 			}
+		} else {
+			$exif = "File type \"$size[mime]\" doesn't support EXIF metadata!";
 		}
 		
 		// construct the metadata array
