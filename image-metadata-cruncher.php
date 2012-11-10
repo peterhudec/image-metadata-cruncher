@@ -579,7 +579,6 @@ class Image_Metadata_Cruncher_Plugin {
 	function js_rangy_core() { wp_enqueue_script( "{$this->prefix}_rangy_core" ); }
 	function js_rangy_selectionsaverestore() { wp_enqueue_script( "{$this->prefix}_rangy_selectionsaverestore" ); }
 	function js() { wp_enqueue_script( "{$this->prefix}_script" ); }
-	function js_highlighting() { wp_enqueue_script( "{$this->prefix}_highlighting" ); }
 	function css() { wp_enqueue_style( "{$this->prefix}_style" ); }
 	
 	/**
@@ -613,10 +612,9 @@ class Image_Metadata_Cruncher_Plugin {
 	public function init() {
 	    
 	    // register stylesheets and scripts for admin
-	    wp_register_script( "{$this->prefix}_rangy_core", plugins_url( 'js/rangy-core.js', __FILE__ ) );
-	    wp_register_script( "{$this->prefix}_rangy_selectionsaverestore", plugins_url( 'js/rangy-selectionsaverestore.js', __FILE__ ) );
+	    wp_register_script( "{$this->prefix}_rangy_core", plugins_url( 'js/ext/rangy-core.js', __FILE__ ) );
+	    wp_register_script( "{$this->prefix}_rangy_selectionsaverestore", plugins_url( 'js/ext/rangy-selectionsaverestore.js', __FILE__ ) );
 	    wp_register_script( "{$this->prefix}_script", plugins_url( 'js/script.js', __FILE__ ) );
-	    wp_register_script( "{$this->prefix}_highlighting", plugins_url( 'js/highlighting.js', __FILE__ ) );
 	    wp_register_style( "{$this->prefix}_style", plugins_url( 'style.css', __FILE__ ) );
 	    
 	    ///////////////////////////////////
