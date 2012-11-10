@@ -1,5 +1,8 @@
 /**
  * @author Peter Hudec
+ * 
+ * Depends on rangy-core.js and rangy-selectionsaverestore.js
+ * http://code.google.com/p/rangy/
  */
 
 jQuery(document).ready(function($) {
