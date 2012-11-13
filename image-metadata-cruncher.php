@@ -5,7 +5,7 @@ Description: Gives you ultimate controll over which image metadata (EXIF or IPTC
 Version: 1.0
 Author: Peter Hudec
 Author URI: http://peterhudec.com
-Plugin URI: http://peterhudec.com/programming/image-metadata-cruncher
+Plugin URI: http://peterhudec.com/programming/2012/11/13/image-metadata-cruncher-wp-plugin/
 License: GPL2
 */
 
