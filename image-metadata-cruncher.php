@@ -600,6 +600,7 @@ class Image_Metadata_Cruncher_Plugin {
 			'title' => '{ IPTC:Headline }',
 			'alt' => '',
 			'caption' => '',
+			'enable_highlighting' => TRUE,
 			'description' => '{ IPTC:Caption | EXIF:ImageDescription }',
 			'custom_meta' => array()
 		) );
@@ -631,6 +632,7 @@ class Image_Metadata_Cruncher_Plugin {
 	    ///////////////////////////////////
 	    // Sections
 	    ///////////////////////////////////
+	    $this->section( 0, 'Tag Syntax Highlighting:' );
 	    $this->section( 1, 'Media form fields:' );
 	    $this->section( 2, 'Custom image meta tags:' );
 	    $this->section( 3, 'Available metadata keywords:' );
@@ -754,6 +756,7 @@ class Image_Metadata_Cruncher_Plugin {
 					<?php
 						settings_fields( "{$this->prefix}_title" ); // renders hidden input fields
 						settings_fields( "{$this->prefix}_alt" ); // renders hidden input fields
+						do_settings_sections( "{$this->prefix}-section-0" );
 						do_settings_sections( "{$this->prefix}-section-1" );
 						do_settings_sections( "{$this->prefix}-section-2" );
 						submit_button();
@@ -773,9 +776,19 @@ class Image_Metadata_Cruncher_Plugin {
     // Section callbacks
     ///////////////////////////////////
     
+    public function section_0() { ?>
+        <p>
+        	The fancy syntax highlighting of template tags may in some cases cause strange caret/cursor behaviour.
+        	If you encounter any of such problems, you can disable this feature here.
+        </p>
+        <?php $options = get_option( $this->prefix ); ?>
+        <input type="checkbox" <?php checked( 'on', $options['enable_highlighting'] ); ?> name="<?php echo $this->prefix; ?>[enable_highlighting]" id="enable-highlighting" />
+        <label for="highlighting">Enable highlighting</label>
+    <?php }
+    
     // media form fields
     public function section_1() { ?>
-		<p>
+    	<p>
 		    Specify text templates with which should the media upload form be prepopulated with.
 		    Use template tags like this <code>{ IPTC:Headline }</code> to place found metadata into the templates.
 			Template tags can be as simple as <code>{ EXIF:Model }</code> or more complex like

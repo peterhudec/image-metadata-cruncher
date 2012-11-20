@@ -75,12 +75,26 @@ jQuery(document).ready(function($) {
 	// Template tags syntax highlighting
 	///////////////////////////////////////////
 	
+	// checks whether highlighting is allowed by the user
+	function enableHighlighting(){
+		// highlighting causes problems only by content editable elements which are only on the settings tab
+		if($('#enable-highlighting').length > 0){
+			// if there is a checkbox we are on the settings tab
+			return $('#enable-highlighting').prop("checked");
+		}else{
+			// allow highlighting
+			return true;
+		}		
+	}
+	
 	// Highlights all elements of class="highlighted" on keyup
 	$('#metadata-cruncher').delegate('.highlighted', 'keyup', function(event) {
 		var $target = $(event.target);
 		
 		// highlight and get non HTML text
-		var text = highlight(event);
+		if(enableHighlighting()){
+			var text = highlight(event);
+		}
 		
 		// pass the resulting text to the hidden input form field
 		$out = $target.parent().children('.hidden-input');
@@ -96,6 +110,14 @@ jQuery(document).ready(function($) {
 	// triger the keyup event on content editable elements when rangy is ready
 	rangy.addInitListener(function(r){
 		$('#metadata-cruncher .highlighted').keyup();
+	});
+	
+	// reset highlighted elements
+	$('#metadata-cruncher').delegate('#enable-highlighting', 'change', function(event) {
+		$('#metadata-cruncher .highlighted').each(function(index) {
+			$(this).html($(this).text());
+			$(this).keyup();
+		});
 	});
 	
 	// before submitting...
