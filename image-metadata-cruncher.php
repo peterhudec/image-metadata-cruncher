@@ -21,11 +21,15 @@ class Image_Metadata_Cruncher_Plugin {
 	private $keywords;
 	private $pattern;
 	public $plugin_name = 'Image Metadata Cruncher';
+	private $version = 1.1;
+	private $after_update = FALSE;
 	
 	/**
 	 * Constructor
 	 */
 	function __construct() {
+		$options = get_option( $this->plugin_name );
+		$this->after_update = intval( $options['version'] ) < intval( $this->version );
 		
 		// the EXIF and IPTC mapping arrays are quite long, so they deserve to be in separate files
 		require_once 'includes/exif-mapping.php';
@@ -597,10 +601,11 @@ class Image_Metadata_Cruncher_Plugin {
 	 */
 	public function defaults() {
 		add_option( $this->prefix, array(
+			'version' => 1.1,
 			'title' => '{ IPTC:Headline }',
 			'alt' => '',
 			'caption' => '',
-			'enable_highlighting' => 'on',
+			'enable_highlighting' => 'enable',
 			'description' => '{ IPTC:Caption | EXIF:ImageDescription }',
 			'custom_meta' => array()
 		) );
@@ -776,13 +781,19 @@ class Image_Metadata_Cruncher_Plugin {
     // Section callbacks
     ///////////////////////////////////
     
-    public function section_0() { ?>
+    public function section_0() {
+    	$options = get_option( $this->prefix );
+    	
+		if ( intval( $options['version'] ) < 1.1 ) {
+			// if the plugin has been updated to version 1.1 enable highlighting by default
+    		$options['enable_highlighting'] = 'enable';
+		}
+    	?>
         <p>
         	The fancy syntax highlighting of template tags may in some cases cause strange caret/cursor behaviour.
         	If you encounter any of such problems, you can disable this feature here.
         </p>
-        <?php $options = get_option( $this->prefix ); ?>
-        <input type="checkbox" <?php checked( 'on', $options['enable_highlighting'] ); ?> name="<?php echo $this->prefix; ?>[enable_highlighting]" id="enable-highlighting" />
+        <input type="checkbox" value="enable" <?php checked( 'enable', $options['enable_highlighting'] ); ?> name="<?php echo $this->prefix; ?>[enable_highlighting]" id="enable-highlighting" />
         <label for="highlighting">Enable highlighting</label>
     <?php }
     
