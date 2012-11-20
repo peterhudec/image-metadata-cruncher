@@ -108,13 +108,14 @@ class Image_Metadata_Cruncher_Plugin {
 		update_post_meta( $post_ID, '_wp_attachment_image_alt', $this->render_template( $options['alt'] ) );
 		
 		// add custom post meta if any
-		foreach ( $options['custom_meta'] as $key => $value ) {
-			
-			// get value
-			$value = $this->render_template( $value );
-			
-			// update or create the post meta
-		    add_post_meta( $post_ID, $key, $value, true ) or update_post_meta( $post_ID, $key, $value );
+		if ( isset( $options['custom_meta'] ) ) {
+			foreach ( $options['custom_meta'] as $key => $value ) {
+				// get value
+				$value = $this->render_template( $value );
+				
+				// update or create the post meta
+			    add_post_meta( $post_ID, $key, $value, true ) or update_post_meta( $post_ID, $key, $value );
+			}
 		}
 		
 		// finally update post
@@ -128,34 +129,47 @@ class Image_Metadata_Cruncher_Plugin {
 	 */
 	private function extract_metadata( $file ) {
 		
+		$this->metadata = array();
+		
 		// extract metadata from file
 		//  the $meta variable will be populated with it
 		$size = getimagesize( $file, $meta );
+		
+		if ( $size ) {
+			$this->metadata['Image'] = $size;
+		}
 		
 		// parse iptc
 		//  IPTC is stored in the APP13 key of the extracted metadata
 		$iptc = iptcparse( $meta['APP13'] );
 		
-		// symplify array structure
-		foreach ( $iptc as &$i ) {
-			$i = $i[0];
-		}
-		
-		// add named copies to all found IPTC items
-		foreach ( $iptc as $key => $value ) {
-			if ( isset( $this->IPTC_MAPPING[ $key ] ) ) {
-				$name = $this->IPTC_MAPPING[ $key ];
-				
-				// add "Caption" alias to "Caption-Caption-Abstract"
-				if ( $key == '2#120' ) {
-					$this->insert_next_to_key( $iptc, $key, array( 'Caption' => $value ) );
+		if ( $iptc ) {
+			// symplify array structure
+			foreach ( $iptc as &$i ) {
+				$i = $i[0];
+			}
+			
+			// add named copies to all found IPTC items
+			foreach ( $iptc as $key => $value ) {
+				if ( isset( $this->IPTC_MAPPING[ $key ] ) ) {
+					$name = $this->IPTC_MAPPING[ $key ];
+					
+					// add "Caption" alias to "Caption-Caption-Abstract"
+					if ( $key == '2#120' ) {
+						$this->insert_next_to_key( $iptc, $key, array( 'Caption' => $value ) );
+					}
+					
+					$this->insert_next_to_key( $iptc, $key, array( $name => $value ) );
 				}
-				
-				$this->insert_next_to_key( $iptc, $key, array( $name => $value ) );
 			}
 		}
 		
-		// parse exif
+		if ( $iptc ) {
+			$this->metadata['IPTC'] = $iptc;
+		}
+		
+		// parse exif		
+		$exif = NULL;
 		
 		// the exif_read_data() function throws a warning if it is passed an unsupported file format.
 		// This warning is impossible to catch so we have to check the file mime type manually
@@ -184,16 +198,11 @@ class Image_Metadata_Cruncher_Plugin {
 					}
 				}
 			}
-		} else {
-			$exif = "File type \"$size[mime]\" doesn't support EXIF metadata!";
 		}
 		
-		// construct the metadata array
-		$this->metadata = array(
-			'Image' => $size,
-			'IPTC' => $iptc,
-			'EXIF' => $exif
-		);
+		if ( $exif ) {
+			$this->metadata['EXIF'] = $exif;
+		}
 		
 		// no need for return but good for testing
 		return $this->metadata;
@@ -224,7 +233,9 @@ class Image_Metadata_Cruncher_Plugin {
 		// replace each found tag with parse_tag method return value
 		$result = preg_replace_callback( $this->pattern, array( $this, 'parse_tag' ), $template );
 		
-		$result = $result ? $result : $template;    
+		if ( $result === NULL ) {
+			$result = $template;
+		}
 	        
 		// handle escaped curly brackets
 		$result = str_replace(array('\{', '\}'), array('{', '}'), $result);
