@@ -718,7 +718,6 @@ class Image_Metadata_Cruncher_Plugin {
 		
 		add_action( 'admin_print_scripts-' . $page, array( $this, 'js_rangy_core' ) );
 		add_action( 'admin_print_scripts-' . $page, array( $this, 'js_rangy_selectionsaverestore' ) );
-		add_action( 'admin_print_scripts-' . $page, array( $this, 'js_highlighting' ) );
 	    add_action( 'admin_print_scripts-' . $page, array( $this, 'js' ) );
 	    add_action( 'admin_print_styles-' . $page, array( $this, 'css' ) );
 	}
