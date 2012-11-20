@@ -181,7 +181,7 @@ jQuery(document).ready(function($) {
 			//   Rangy inserts boundary markers at the selection boundary
 			var selection = rangy.saveSelection();
 			
-			// replace rangy boundary markers with this unusual unicode character ▨ which survives html to text conversion
+			// replace rangy boundary markers with this unusual unicode character \u25A8 which survives html to text conversion
 			//   and save them to a temporary array
 			var p = /(<span[\s]*id="selectionBoundary[^<>]*>[^<>]*<\/[\s]*span>)/g;
 			var markers = [];
@@ -189,7 +189,7 @@ jQuery(document).ready(function($) {
 		        // store found marker...
 		        markers.push(match);
 		        // ...and replace with identifier
-		        return '▨';
+		        return '\u25A8';
 		   });
 		   // put it back to input
 		   $in.html(html);
@@ -198,7 +198,7 @@ jQuery(document).ready(function($) {
 		   var newHTML = applyMarkup($in.text());   
 		   
 		   // restore rangy identifiers
-		   newHTML = newHTML.replace('▨', function(match){
+		   newHTML = newHTML.replace('\u25A8', function(match){
 		        // retrieve from temp storage
 		        return markers.shift();
 		   });
@@ -217,12 +217,12 @@ jQuery(document).ready(function($) {
 	function applyMarkup(input) {
 		
 		// matches sequence of word characters including period "." and hash "#"
-		//  with min lenght of 1 and proper handling of "▨" cursor character
-		var prefixPattern = /(?:[\w.#▨]{2,}|[^▨\s]{1})/.source;
+		//  with min lenght of 1 and proper handling of "\u25A8" cursor character
+		var prefixPattern = /(?:[\w.#\u25A8]{2,}|[^\u25A8\s]{1})/.source;
 		
 		// matches sequence of word characters including period ".", hash "#" and colon ":"
-		//  with min lenght of 1 and proper handling of "▨" cursor character
-		var keywordPartPattern = /(?:[\w.:#▨\-]{2,}|[^▨\s]{1})/.source;
+		//  with min lenght of 1 and proper handling of "\u25A8" cursor character
+		var keywordPartPattern = /(?:[\w.:#\u25A8\-]{2,}|[^\u25A8\s]{1})/.source;
 		
 		// matches keyword in form of "abc:def(>ijk)*"
 		var keywordPattern = re(
@@ -239,9 +239,9 @@ jQuery(document).ready(function($) {
 		var keywordsPattern = re(
 			keywordPattern, // must begin with at least one keyword
 			'(?:', // followed by zero or more groups of ( | keyword)
-				'[\\s▨]*', // optional space
+				'[\\s\u25A8]*', // optional space
 				'\\|', // must begin with pipe
-				'[\\s▨]*', // optional space
+				'[\\s\u25A8]*', // optional space
 				keywordPattern, // keyword
 			')*'
 		).source;
@@ -260,7 +260,7 @@ jQuery(document).ready(function($) {
 		            '(?:',
 			            '[^"]', // any non doublequote character...
 			            '|', // or...
-			            '\\\\▨?"', // escaped doublequote with optional cursor identifier
+			            '\\\\\u25A8?"', // escaped doublequote with optional cursor identifier
 		            ')*', // zero or more times
 	            '"', // must end with doublequote
             ')' // capture end
@@ -272,34 +272,34 @@ jQuery(document).ready(function($) {
 		var p = re(
 			'({)', // (1) opening bracket
 			
-			'([\\s▨]*)', // (2) space1
+			'([\\s\u25A8]*)', // (2) space1
 			
             '(', // (3) keywords
             	keywordsPattern,
             ')',
             
-            '([\\s▨]*)', // (4) space2
+            '([\\s\u25A8]*)', // (4) space2
 			
             '(?:', // begin success group
-	            '(@[\\s▨]*)', // (5) success identifier "@"
+	            '(@[\\s\u25A8]*)', // (5) success identifier "@"
 	            quotesPattern, // (6) success value
             ')?', // end success group
             
-            '([\\s▨]*)', // (7) space3
+            '([\\s\u25A8]*)', // (7) space3
             
             '(?:', // begin default group
-	            '(%[\\s▨]*)', // (8) default identifier "?"
+	            '(%[\\s\u25A8]*)', // (8) default identifier "?"
 	            quotesPattern, // (9) default value
             ')?', // end default group
             
-            '([\\s▨]*)', // (10) space4
+            '([\\s\u25A8]*)', // (10) space4
             
             '(?:', // begin delimiter group
-	            '(#[\\s▨]*)', // (11) delimiter identifier ":"
+	            '(#[\\s\u25A8]*)', // (11) delimiter identifier ":"
 	            quotesPattern, // (12) delimiter value
             ')?', // end delimiter group
             
-			'([\\s▨]*)', // (13) space5
+			'([\\s\u25A8]*)', // (13) space5
 			
 			'(})' // (14) closing bracket
 		)
@@ -358,9 +358,9 @@ jQuery(document).ready(function($) {
 		if(content){
 			var p = re(
 				'(', // must be preceded with
-					'[^\\\\▨]', // one non-backslash, non-cursor character
+					'[^\\\\\u25A8]', // one non-backslash, non-cursor character
 					'|', // or
-					'[^\\\\]▨', // non-backslash followed by cursor
+					'[^\\\\]\u25A8', // non-backslash followed by cursor
 				')',
 				'(\\$)' // dolar
 			);
@@ -379,7 +379,7 @@ jQuery(document).ready(function($) {
             '(:)', // colon
             '([^|\\s]+)', // key
             ')?',
-            '([\\s▨]*\\|)?' // pipe
+            '([\\s\u25A8]*\\|)?' // pipe
 		);
 		
 		return content.replace(p, function(m, prefix, colon, key, pipe){
