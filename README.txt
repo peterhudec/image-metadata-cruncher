@@ -37,6 +37,10 @@ Copy the **image-metadata-cruncher** folder into the plugins directory and activ
 
 == Changelog ==
 
+= 1.1 =
+* Fixed several bugs
+* Added an option to disable syntax highlighting of template tags
+
 = 1.0 =
 * Initial version
 
