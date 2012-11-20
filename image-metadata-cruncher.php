@@ -600,7 +600,7 @@ class Image_Metadata_Cruncher_Plugin {
 			'title' => '{ IPTC:Headline }',
 			'alt' => '',
 			'caption' => '',
-			'enable_highlighting' => TRUE,
+			'enable_highlighting' => 'on',
 			'description' => '{ IPTC:Caption | EXIF:ImageDescription }',
 			'custom_meta' => array()
 		) );
@@ -820,17 +820,19 @@ class Image_Metadata_Cruncher_Plugin {
 				<th>Template</th>
 				<th>Delete</th>
 			</thead>
-			<?php foreach ( $options['custom_meta'] as $key => $value ): ?>
-				<tr>
-	                <td><input type="text" class="name" value="<?php echo $key ?>" /></td>
-	                <td>
-	                	<div class="highlighted ce" contenteditable="true"><?php echo $value ?></div>
-	                	<?php // used textarea because hidden input caused bugs when whitespace got converted to &nbsp; ?>
-	                	<textarea class="hidden-input template" name="<?php echo $this->prefix; ?>[custom_meta][<?php echo $key ?>]" ><?php echo $value ?></textarea>
-	                </td>
-	                <td><button class="button">Remove</button></td>
-				</tr>
-			<?php endforeach; ?>
+			<?php if ( is_array( $options['custom_meta'] ) ): ?>
+				<?php foreach ( $options['custom_meta'] as $key => $value ): ?>
+					<tr>
+		                <td><input type="text" class="name" value="<?php echo $key ?>" /></td>
+		                <td>
+		                	<div class="highlighted ce" contenteditable="true"><?php echo $value ?></div>
+		                	<?php // used textarea because hidden input caused bugs when whitespace got converted to &nbsp; ?>
+		                	<textarea class="hidden-input template" name="<?php echo $this->prefix; ?>[custom_meta][<?php echo $key ?>]" ><?php echo $value ?></textarea>
+		                </td>
+		                <td><button class="button">Remove</button></td>
+					</tr>
+				<?php endforeach; ?>
+			<?php endif ?>
 		</table>
 		<div>
 			<button id="add-custom-meta" class="button">Add New Field</button>
