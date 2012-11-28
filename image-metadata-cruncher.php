@@ -21,7 +21,7 @@ class Image_Metadata_Cruncher_Plugin {
 	private $keywords;
 	private $pattern;
 	public $plugin_name = 'Image Metadata Cruncher';
-	private $version = 1.1;
+	private $version = 1.2;
 	private $after_update = FALSE;
 	
 	/**
