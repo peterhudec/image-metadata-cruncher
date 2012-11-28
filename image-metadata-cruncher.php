@@ -150,7 +150,10 @@ class Image_Metadata_Cruncher_Plugin {
 		if ( $iptc ) {
 			// symplify array structure
 			foreach ( $iptc as &$i ) {
-				$i = $i[0];
+				// if the array has only one item
+				if ( count( $i ) <= 1 ) {
+					$i = $i[0];
+				}
 			}
 			
 			// add named copies to all found IPTC items
@@ -366,7 +369,8 @@ class Image_Metadata_Cruncher_Plugin {
 			
 		} else {
 			// try to find anything that is provided (handles IPTC too)
-			$value = $this->get_metadata( $metadata, $category, $pieces[1] );
+			$key = $path[0];
+			$value = $this->get_metadata( $metadata, $category, $key );
 		}
 		
 		// get the level of the value specified in the path
@@ -787,6 +791,8 @@ class Image_Metadata_Cruncher_Plugin {
 		if ( intval( $options['version'] ) < 1.1 ) {
 			// if the plugin has been updated to version 1.1 enable highlighting by default
     		$options['enable_highlighting'] = 'enable';
+			$options['version'] = 1.1;
+			update_option( $this->prefix, $options );
 		}
     	?>
         <p>
