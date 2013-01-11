@@ -23,6 +23,7 @@ class Image_Metadata_Cruncher_Plugin {
 	public $plugin_name = 'Image Metadata Cruncher';
 	private $version = 1.2;
 	private $after_update = FALSE;
+	private $settings_slug = 'image_metadata_cruncher-options';
 	
 	/**
 	 * Constructor
@@ -569,7 +570,7 @@ class Image_Metadata_Cruncher_Plugin {
 	    }
 		
 	    if ( $file == $this_plugin ) {
-	    	$url = get_bloginfo( 'wpurl' ) . "/wp-admin/admin.php?page=$this->settings_slug";
+	    	$url = get_bloginfo( 'wpurl' ) . "/wp-admin/admin.php?page={$this->settings_slug}";
 	        $settings_link = "<a href=\"$url\">Settings</a>";
 	        array_unshift( $links, $settings_link );
 	    }
@@ -584,7 +585,7 @@ class Image_Metadata_Cruncher_Plugin {
 	 */
 	public function plugin_row_meta( $links, $file ) {
 		if ( $file == plugin_basename( __FILE__ ) ) {
-			$url = get_bloginfo( 'wpurl' ) . "/wp-admin/admin.php?page=$this->settings_slug";
+			$url = get_bloginfo( 'wpurl' ) . "/wp-admin/admin.php?page={$this->settings_slug}";
 	        $links[] = "<a href=\"$url\">Settings</a>";
 			$links[] = "<a href=\"$this->donate_url\">Donate</a>";
 		}
