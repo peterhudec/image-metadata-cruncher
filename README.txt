@@ -3,8 +3,8 @@ Contributors: PeterHudec
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=RJYHYJJD2VKAN
 Tags: image, metadata, EXIF, IPTC, lightroom, photoshop, photomechanic, photostation, meta
 Requires at least: 2.7
-Tested up to: 3.4
-Stable tag: 1.2
+Tested up to: 3.5
+Stable tag: 1.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -36,6 +36,9 @@ Copy the **image-metadata-cruncher** folder into the plugins directory and activ
 3. How to Use Template tags
 
 == Changelog ==
+
+= 1.3 =
+* Fixed broken links to plugin settings in the plugins page.
 
 = 1.2 =
 * Fixed a bug when the plugin extracted only the first item of an IPTC metadata of type array like IPTC:Keywords and IPTC:SupplementalCategories

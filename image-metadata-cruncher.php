@@ -2,7 +2,7 @@
 /*
 Plugin Name: Image Metadata Cruncher
 Description: Gives you ultimate controll over which image metadata (EXIF or IPTC) WordPress extracts from an uploaded image and where and in what form it then goes. You can even specify unlimited custom post meta tags as the target of the extracted image metadata. 
-Version: 1.2
+Version: 1.3
 Author: Peter Hudec
 Author URI: http://peterhudec.com
 Plugin URI: http://peterhudec.com/programming/2012/11/13/image-metadata-cruncher-wp-plugin/
@@ -21,7 +21,7 @@ class Image_Metadata_Cruncher_Plugin {
 	private $keywords;
 	private $pattern;
 	public $plugin_name = 'Image Metadata Cruncher';
-	private $version = 1.2;
+	private $version = 1.3;
 	private $after_update = FALSE;
 	private $settings_slug = 'image_metadata_cruncher-options';
 	
