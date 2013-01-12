@@ -85,7 +85,8 @@ class Image_Metadata_Cruncher_Plugin {
 	public function wp_handle_upload_prefilter( $file ) {
 			
 		// get meta
-		$this->metadata = $this->extract_metadata( $file['tmp_name'] );
+		
+		$this->metadata = $this->extract_metadata( $file );
 		
 		// return untouched file
 		return $file;
@@ -135,14 +136,16 @@ class Image_Metadata_Cruncher_Plugin {
 	private function extract_metadata( $file ) {
 		
 		$this->metadata = array();
-		
+				
 		// extract metadata from file
 		//  the $meta variable will be populated with it
-		$size = getimagesize( $file, $meta );
+		$size = getimagesize( $file['tmp_name'], $meta );
 		
-		if ( $size ) {
-			$this->metadata['Image'] = $size;
-		}
+		// extract pathinfo and merge with size
+		$this->metadata['Image'] = array_merge( $size, pathinfo( $file['name'] ) );
+		
+		// remove index 'dirname'
+		unset($this->metadata['Image']['dirname']);
 		
 		// parse iptc
 		//  IPTC is stored in the APP13 key of the extracted metadata
