@@ -191,24 +191,29 @@ class Image_Metadata_Cruncher_Plugin {
 			'image/tiff',
 		);
 		
+		
 		if ( in_array( $size['mime'], $safe_file_formats ) ) {
+		
+			$exif = exif_read_data( $file['tmp_name'] );
 			
-			$exif = exif_read_data( $file );
-			// add named copies of UndefinedTag:0x0000 items to $exif array
-			foreach ( $exif as $key => $value ) {
-				// check case insensitively if key begins with "UndefinedTag:"
-				if ( strtolower( substr( $key, 0, 13 ) ) == 'undefinedtag:' ) {
-					// get EXIF tag name by ID and convert it to base 16 integer
-					$id = intval( substr( $key, 13 ), 16 );
-					
-					if ( isset( $this->EXIF_MAPPING[ $id ] ) ) {
-						// create copy with EXIF tag name as key
-						$name = $this->EXIF_MAPPING[ $id ];
-						//$exif[ $name ] = $value;
-						$this->insert_next_to_key( $exif, $key, array( $name => $value ) );
+			if ( is_array( $exif ) ) {
+				// add named copies of UndefinedTag:0x0000 items to $exif array
+				foreach ( $exif as $key => $value ) {
+					// check case insensitively if key begins with "UndefinedTag:"
+					if ( strtolower( substr( $key, 0, 13 ) ) == 'undefinedtag:' ) {
+						// get EXIF tag name by ID and convert it to base 16 integer
+						$id = intval( substr( $key, 13 ), 16 );
+						
+						if ( isset( $this->EXIF_MAPPING[ $id ] ) ) {
+							// create copy with EXIF tag name as key
+							$name = $this->EXIF_MAPPING[ $id ];
+							//$exif[ $name ] = $value;
+							$this->insert_next_to_key( $exif, $key, array( $name => $value ) );
+						}
 					}
 				}
 			}
+			
 		}
 		
 		if ( $exif ) {
