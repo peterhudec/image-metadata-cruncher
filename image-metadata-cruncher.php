@@ -439,6 +439,8 @@ class Image_Metadata_Cruncher_Plugin {
 			
 	    foreach ( $keywords as $keyword ) {
 	    	// search for key in metadata extracted from the image
+	    	
+	    	//TODO: Sanitize?
 	        $meta = $this->get_meta_by_key( trim( $keyword ), $delimiter );
 	        
 	        if ( $meta ) {
@@ -449,13 +451,13 @@ class Image_Metadata_Cruncher_Plugin {
 	        		//   and handle escaped characters
 	        		return str_replace(
 	        			array(
-	        				'\$', // replace escaped dolar sign with some unusual character like: ⌨
+	        				'\$', // replace escaped dolar sign with some unusual unicode character
 	        				'$', // replace dolar signs for meta value
 	        				'\"', // replace escaped doublequote for doublequote
-	        				'⌨' // replace ⌨ with dolar sign
+	        				'\u2328' // replace \u2328 with dolar sign
 	        			),
 	        			array(
-	        				'⌨',
+	        				'\u2328',
 	        				$meta,
 	        				'"',
 	        				'$'
@@ -848,6 +850,10 @@ class Image_Metadata_Cruncher_Plugin {
 			</thead>
 			<?php if ( is_array( $options['custom_meta'] ) ): ?>
 				<?php foreach ( $options['custom_meta'] as $key => $value ): ?>
+					<?php
+					$key = sanitize_text_field($key);
+					$value = sanitize_text_field($value);
+					?>
 					<tr>
 		                <td><input type="text" class="name" value="<?php echo $key ?>" /></td>
 		                <td>
@@ -1467,11 +1473,15 @@ class Image_Metadata_Cruncher_Plugin {
     /**
 	 * General callback for media form fields
 	 */
-	private function cb( $key ) { ?>
-		<?php $options = get_option( $this->prefix ); ?>
-		<div class="highlighted ce" contenteditable="true"><?php echo $options[$key]; ?></div>
+	private function cb( $key ) {
+		$options = get_option( $this->prefix );
+		$value = sanitize_text_field($options[$key]);
+		$key = sanitize_text_field($key);
+		?>
+		
+		<div class="highlighted ce" contenteditable="true"><?php echo $value; ?></div>
 		<?php // used textarea because hidden input caused bugs when whitespace got converted to &nbsp; ?>
-		<textarea class="hidden-input" id="<?php echo $this->prefix; ?>[<?php echo $key; ?>]" name="<?php echo $this->prefix; ?>[<?php echo $key; ?>]"><?php echo $options[$key]; ?></textarea>
+		<textarea class="hidden-input" id="<?php echo $this->prefix; ?>[<?php echo $key; ?>]" name="<?php echo $this->prefix; ?>[<?php echo $key; ?>]"><?php echo $value; ?></textarea>
 	<?php }
 	
 	public function title_cb() { $this->cb( 'title' ); }
