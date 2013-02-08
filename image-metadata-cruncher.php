@@ -848,22 +848,24 @@ class Image_Metadata_Cruncher_Plugin {
 				<th>Template</th>
 				<th>Delete</th>
 			</thead>
-			<?php if ( is_array( $options['custom_meta'] ) ): ?>
-				<?php foreach ( $options['custom_meta'] as $key => $value ): ?>
-					<?php
-					$key = sanitize_text_field($key);
-					$value = sanitize_text_field($value);
-					?>
-					<tr>
-		                <td><input type="text" class="name" value="<?php echo $key ?>" /></td>
-		                <td>
-		                	<div class="highlighted ce" contenteditable="true"><?php echo $value ?></div>
-		                	<?php // used textarea because hidden input caused bugs when whitespace got converted to &nbsp; ?>
-		                	<textarea class="hidden-input template" name="<?php echo $this->prefix; ?>[custom_meta][<?php echo $key ?>]" ><?php echo $value ?></textarea>
-		                </td>
-		                <td><button class="button">Remove</button></td>
-					</tr>
-				<?php endforeach; ?>
+			<?php if ( isset( $options['custom_meta'] ) ) : ?>
+				<?php if ( is_array( $options['custom_meta'] ) ): ?>
+					<?php foreach ( $options['custom_meta'] as $key => $value ): ?>
+						<?php
+						$key = sanitize_text_field($key);
+						$value = sanitize_text_field($value);
+						?>
+						<tr>
+			                <td><input type="text" class="name" value="<?php echo $key ?>" /></td>
+			                <td>
+			                	<div class="highlighted ce" contenteditable="true"><?php echo $value ?></div>
+			                	<?php // used textarea because hidden input caused bugs when whitespace got converted to &nbsp; ?>
+			                	<textarea class="hidden-input template" name="<?php echo $this->prefix; ?>[custom_meta][<?php echo $key ?>]" ><?php echo $value ?></textarea>
+			                </td>
+			                <td><button class="button">Remove</button></td>
+						</tr>
+					<?php endforeach; ?>
+				<?php endif ?>
 			<?php endif ?>
 		</table>
 		<div>
