@@ -616,7 +616,7 @@ class Image_Metadata_Cruncher_Plugin {
 	 */
 	public function defaults() {
 		add_option( $this->prefix, array(
-			'version' => 1.1,
+			'version' => $this->version,
 			'title' => '{ IPTC:Headline }',
 			'alt' => '',
 			'caption' => '',
@@ -799,10 +799,11 @@ class Image_Metadata_Cruncher_Plugin {
     public function section_0() {
     	$options = get_option( $this->prefix );
     	
-		if ( intval( $options['version'] ) < 1.1 ) {
-			// if the plugin has been updated to version 1.1 enable highlighting by default
+		if ( intval( $options['version'] ) > 1.0 ) {
+			//TODO: Move to defaults
+			// if the plugin has been updated from version 1.0 enable highlighting by default
     		$options['enable_highlighting'] = 'enable';
-			$options['version'] = 1.1;
+			$options['version'] = $this->version;
 			update_option( $this->prefix, $options );
 		}
     	?>
