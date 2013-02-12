@@ -17,6 +17,7 @@ class Image_Metadata_Cruncher_Plugin {
 	
 	// stores metadata between wp_handle_upload_prefilter and add_attachment hooks
 	private $metadata;
+	
 	private $keyword;
 	private $keywords;
 	private $pattern;
@@ -24,6 +25,7 @@ class Image_Metadata_Cruncher_Plugin {
 	private $version = 1.5;
 	private $after_update = FALSE;
 	private $settings_slug = 'image_metadata_cruncher-options';
+	private $donate_url = 'https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=RJYHYJJD2VKAN';
 	
 	/**
 	 * Constructor
@@ -93,8 +95,8 @@ class Image_Metadata_Cruncher_Plugin {
 	}
 	
 	/**
-	 * The add_attachment hook gets triggered when the attachment post is created
-	 * in Wordpress media uploads are handled as posts
+	 * The add_attachment hook gets triggered when the attachment post is created.
+	 * In Wordpress media uploads are handled as posts.
 	 */
 	public function add_attachment( $post_ID ) {
 		
@@ -124,7 +126,8 @@ class Image_Metadata_Cruncher_Plugin {
 			}
 		}
 		
-		// finally update post
+		// finally sanitize and update post
+		sanitize_post( $post );
 		wp_update_post( $post );
 	}
 	
@@ -225,9 +228,9 @@ class Image_Metadata_Cruncher_Plugin {
 	}
 	
 	/**
-	 * Replaces template tags in template string
+	 * Replaces template tags in template string.
 	 * 
-	 * @return Template string with processed template tags
+	 * @return Sanitized template string with processed template tags.
 	 */
 	private function render_template( $template ){
 		
@@ -256,7 +259,7 @@ class Image_Metadata_Cruncher_Plugin {
 		// handle escaped curly brackets
 		$result = str_replace(array('\{', '\}'), array('{', '}'), $result);
 		
-		return $result;
+		return sanitize_text_field( $result );
 	}
 	
 	/**
