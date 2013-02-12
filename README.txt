@@ -4,24 +4,30 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: image, metadata, EXIF, IPTC, lightroom, photoshop, photomechanic, photostation, meta
 Requires at least: 2.7
 Tested up to: 3.5
-Stable tag: 1.5
+Stable tag: 1.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Gives you ultimate controll over which image metadata WordPress extracts from an uploaded image
-and where and in what form it then goes.
+A versatile Swiss Army Knife for extraction and processing of IPTC, EXIF and other image metadata.
 
 == Description ==
 
-When you upload an image in the WordPress admin, WordPress extracts the **EXIF ImageDescription** metadata to the 
-**Description** field and the **IPTC Headline** to the **Title** field of
-the form that gets displayed after the image has been uploaded.
+A must have tool for photographers who edit their images in **Lightroom** or **Photomechanic** and
+don't want to waste their precious time by writing all the **keywords** and **categories**
+once again by hand.
 
-The **Image Metadata Cruncher** plugin lets you choose what metadata will be extracted from the uploaded image and
-in which fields of the form they appear.
+WordPress by default extracts the **EXIF ImageDescription** of an uploaded image to
+the **Description** field and the **IPTC Headline** to the **Title** field of
+the **Edit Media** form.
 
-Moreover, the plugin's simple templating system allows you to prefill the form with complex strings like
-*Image was taken with Canon 7D, exposure was 1/125s and aperture was f/2.8*.
+**Image Metadata Cruncher** gives you ultimate controll over this behaviour.
+You decide what metadata gets where and in what form.
+
+
+Moreover, the plugin's simple but powerfull templating system allows you to
+convert the extracted metadata into complex strings like:
+
+> Image was taken with Canon 7D, exposure was 1/125s and aperture was f/2.8.
 
 You can even extract metadata to unlimited custom **post meta** that will be saved with the image to the database.
 
@@ -36,6 +42,10 @@ Copy the **image-metadata-cruncher** folder into the plugins directory and activ
 3. How to Use Template tags
 
 == Changelog ==
+
+= 1.6 =
+* Fixed a bug when the **enable highlighting** option didn't get saved.
+* Fixed some potential security issues.
 
 = 1.5 =
 * Fixed a bug which threw an exif_read_data() warning introduced by previous update.
