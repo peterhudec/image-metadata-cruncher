@@ -140,7 +140,7 @@ class Image_Metadata_Cruncher {
 		}
 		
 		// finally sanitize and update post
-		sanitize_post( $post );
+		// sanitize_post( $post );
 		wp_update_post( $post );
 	}
 	

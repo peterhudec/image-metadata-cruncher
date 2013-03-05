@@ -96,7 +96,7 @@ jQuery(document).ready(function($) {
 		if(enableHighlighting()){
 			text = highlight(event);
 		}else{
-			text = $target.html();
+			text = $target.text();
 		}
 		
 		// pass the resulting text to the hidden input form field

@@ -29,7 +29,36 @@ convert the extracted metadata into complex strings like:
 
 > Image was taken with Canon 7D, exposure was 1/125s and aperture was f/2.8.
 
-You can even extract metadata to unlimited custom **post meta** that will be saved with the image to the database.
+You can even extract metadata to unlimited custom **post meta** that will be saved
+with the image to the database.
+
+The plugin also has some usefull public methods which you can use in your code:
+
+This will return the complete metadata of the image in a stuctured array same as {ALL:PHP}.
+	
+	$metadata = $image_metadata_cruncher->get_meta_by_path( '/path/to/your/image.jpg' );
+	
+The same but by attachment post ID.
+	
+	$metadata = $image_metadata_cruncher->get_meta_by_id( $attachment_ID );
+	
+You can crunch an allready uploaded attachment with the `crunch()` method.
+The template and its indexes are optional. If missing, templates from plugin's settings will be used.
+	
+	$template = array(
+		'title' => '{IPTC:Title}',
+		'caption' => '{IPTC:Caption}',
+		'description' => '{IPTC:Headline}',
+		'alt' => '{IPTC:Caption}',
+		'custom_meta' => array(
+			'camera-make' => '{EXIF:Make}',
+	 		'camera-model' => '{EXIF:Model}',
+		),
+	)
+	
+	$image_metadata_cruncher->crunch( $attachment_ID, $template )
+
+
 
 == Installation ==
 
@@ -41,9 +70,43 @@ Copy the **image-metadata-cruncher** folder into the plugins directory and activ
 2. Available Metadata
 3. How to Use Template tags
 
+== Frequently Asked Questions ==
+
+= Is it possible to extract metadata from allready uploaded images? =
+
+You can use the plugin's methods like this:
+
+This will return the complete metadata of the image in a stuctured array same as {ALL:PHP}.
+	
+	$metadata = $image_metadata_cruncher->get_meta_by_path( '/path/to/your/image.jpg' );
+	
+The same but by attachment post ID.
+	
+	$metadata = $image_metadata_cruncher->get_meta_by_id( $attachment_ID );
+	
+You can crunch an allready uploaded attachment with the `crunch()` method:
+Which will extract metadata from the attachment image file and
+update the attachment post according to the optional template array.
+Templates from plugin settings will be used for missing indexes.
+	
+	$template = array(
+		'title' => '{IPTC:Title}',
+		'caption' => '{IPTC:Caption}',
+		'description' => '{IPTC:Headline}',
+		'alt' => '{IPTC:Caption}',
+		'custom_meta' => array(
+			'camera-make' => '{EXIF:Make}',
+	 		'camera-model' => '{EXIF:Model}',
+		),
+	)
+	
+	$image_metadata_cruncher->crunch( $attachment_ID, $template )
+	
+
 == Changelog ==
 
 = 1.7 =
+* You can now also use the plugin in your code to extract and crunch metadata of an attachment post.
 * The syntax highlighting should now work on every browser.
 * Fixed a bug when text inserted after the syntax highlighting has been disabled didn't get saved.
 
