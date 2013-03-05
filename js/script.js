@@ -90,10 +90,13 @@ jQuery(document).ready(function($) {
 	// Highlights all elements of class="highlighted" on keyup
 	$('#metadata-cruncher').delegate('.highlighted', 'keyup', function(event) {
 		var $target = $(event.target);
+		var text;
 		
 		// highlight and get non HTML text
 		if(enableHighlighting()){
-			var text = highlight(event);
+			text = highlight(event);
+		}else{
+			text = $target.html();
 		}
 		
 		// pass the resulting text to the hidden input form field
