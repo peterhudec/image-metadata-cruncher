@@ -205,7 +205,7 @@ jQuery(document).ready(function($) {
 			
 			// replace rangy boundary markers with this unusual unicode character \u25A8 which survives html to text conversion
 			//   and save them to a temporary array
-			var p = /(<span[\s]*id="selectionBoundary[^<>]*>[^<>]*<\/[\s]*span>)/g;
+			var p = /<span[^>]*rangySelectionBoundary[^>]*>[^<]*<\/[^>]*>/g
 			var markers = [];
 			var html = $in.html().replace(p, function(match){
 		        // store found marker...
