@@ -43,6 +43,10 @@ Copy the **image-metadata-cruncher** folder into the plugins directory and activ
 
 == Changelog ==
 
+= 1.7 =
+* The syntax highlighting should now work on every browser.
+* Fixed a bug when text inserted after the syntax highlighting has been disabled didn't get saved.
+
 = 1.6 =
 * Fixed a bug when the **enable highlighting** option didn't get saved.
 * Fixed some potential security issues.
