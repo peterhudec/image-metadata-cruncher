@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: image, metadata, EXIF, IPTC, lightroom, photoshop, photomechanic, photostation, meta
 Requires at least: 2.7
 Tested up to: 3.5
-Stable tag: 1.6
+Stable tag: 1.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -106,7 +106,7 @@ Templates from plugin settings will be used for missing indexes.
 == Changelog ==
 
 = 1.7 =
-* You can now also use the plugin in your code to extract and crunch metadata of an attachment post.
+* Now you can also use the plugin in your code to extract and crunch metadata of an attachment post.
 * The syntax highlighting should now work on every browser.
 * Fixed a bug when text inserted after the syntax highlighting has been disabled didn't get saved.
 
