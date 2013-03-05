@@ -13,7 +13,7 @@ License: GPL2
 /**
  * Main plugin class
  */
-class Image_Metadata_Cruncher_Plugin {
+class Image_Metadata_Cruncher {
 	
 	// stores metadata between wp_handle_upload_prefilter and add_attachment hooks
 	private $metadata;
@@ -87,8 +87,7 @@ class Image_Metadata_Cruncher_Plugin {
 	public function wp_handle_upload_prefilter( $file ) {
 			
 		// get meta
-		
-		$this->metadata = $this->extract_metadata( $file );
+		$this->metadata = $this->get_meta_by_path( $file['name'], $file['tmp_name'] );
 		
 		// return untouched file
 		return $file;
@@ -98,7 +97,7 @@ class Image_Metadata_Cruncher_Plugin {
 	 * The add_attachment hook gets triggered when the attachment post is created.
 	 * In Wordpress media uploads are handled as posts.
 	 */
-	public function add_attachment( $post_ID ) {
+	public function add_attachment( $post_ID, $template = array() ) {
 		
 		// get plugin options
 		$options = get_option( $this->prefix );
@@ -106,24 +105,38 @@ class Image_Metadata_Cruncher_Plugin {
 		// uploaded image is handled as post by WordPress
 		$post = get_post( $post_ID );
 		
+		// Try to get template from $template array then from $options.
+		$title = isset( $template['title'] ) ? $template['title'] : $options['title'];
+		$caption = isset( $template['caption'] ) ? $template['caption'] : $options['caption'];
+		$description = isset( $template['description'] ) ? $template['description'] : $options['description'];
+		$alt = isset( $template['alt'] ) ? $template['alt'] : $options['alt'];
+		
+		if ( isset( $template['custom_meta'] ) ) {
+			$meta = $template['custom_meta'];
+		} elseif ( isset( $options['custom_meta'] ) ) {
+			$meta = $options['custom_meta'];
+		} else {
+			$meta = array();
+		}
+		
+		// Apply new values to post properties:
+		
 		// title
-		$post->post_title = $this->render_template( $options['title'] );
+		$post->post_title = $this->render_template( $title );
 		// caption
-		$post->post_excerpt = $this->render_template( $options['caption'] );
+		$post->post_excerpt = $this->render_template( $caption );
 		// description
-		$post->post_content = $this->render_template( $options['description'] );
+		$post->post_content = $this->render_template( $description );
 		// alt is meta attribute
-		update_post_meta( $post_ID, '_wp_attachment_image_alt', $this->render_template( $options['alt'] ) );
+		update_post_meta( $post_ID, '_wp_attachment_image_alt', $this->render_template( $alt ) );
 		
 		// add custom post meta if any
-		if ( isset( $options['custom_meta'] ) ) {
-			foreach ( $options['custom_meta'] as $key => $value ) {
-				// get value
-				$value = $this->render_template( $value );
-				
-				// update or create the post meta
-			    add_post_meta( $post_ID, $key, $value, true ) or update_post_meta( $post_ID, $key, $value );
-			}
+		foreach ( $meta as $key => $value ) {
+			// get value
+			$value = $this->render_template( $value );
+			
+			// update or create the post meta
+		    add_post_meta( $post_ID, $key, $value, true ) or update_post_meta( $post_ID, $key, $value );
 		}
 		
 		// finally sanitize and update post
@@ -131,21 +144,26 @@ class Image_Metadata_Cruncher_Plugin {
 		wp_update_post( $post );
 	}
 	
+	
 	/**
-	 * Extracts image metadata of the supplied image
+	 * Extracts image metadata from the image specified by its path.
 	 * 
 	 * @return structured array with all available metadata
 	 */
-	private function extract_metadata( $file ) {
+	public function get_meta_by_path( $name, $tmp_name = NULL ) {
+		
+		if ( !$tmp_name ) {
+			$tmp_name = $name;
+		}
 		
 		$this->metadata = array();
 				
 		// extract metadata from file
 		//  the $meta variable will be populated with it
-		$size = getimagesize( $file['tmp_name'], $meta );
+		$size = getimagesize( $tmp_name, $meta );
 		
 		// extract pathinfo and merge with size
-		$this->metadata['Image'] = array_merge( $size, pathinfo( $file['name'] ) );
+		$this->metadata['Image'] = array_merge( $size, pathinfo( $name ) );
 		
 		// remove index 'dirname'
 		unset($this->metadata['Image']['dirname']);
@@ -197,7 +215,7 @@ class Image_Metadata_Cruncher_Plugin {
 		
 		if ( in_array( $size['mime'], $safe_file_formats ) ) {
 		
-			$exif = exif_read_data( $file['tmp_name'] );
+			$exif = exif_read_data( $tmp_name );
 			
 			if ( is_array( $exif ) ) {
 				// add named copies of UndefinedTag:0x0000 items to $exif array
@@ -227,6 +245,47 @@ class Image_Metadata_Cruncher_Plugin {
 		return $this->metadata;
 	}
 	
+	
+	/**
+	 * Extracts image metadata from the image specified by the attachment post ID.
+	 * 
+	 * @return structured array with all available metadata
+	 */
+	public function get_meta_by_id( $ID ) {
+		$post = get_post( $ID );
+		return $this->get_meta_by_path( $post->guid );
+	}
+	
+	/**
+	 * Extracts metadata from the image file belonging to the attachment post
+	 * specified by the $ID and updates the post according to supplied $template array.
+	 * The $template array should have following structure:
+	 * 
+	 * $template = array(
+	 * 		'title' => 'Title template',
+	 * 		'caption' => 'Caption template',
+	 * 		'description' => 'Description template',
+	 * 		'alt' => 'Alt template',
+	 * 		'custom_meta' => array(
+	 * 			'meta-name' => 'Meta template',
+	 * 			'another-meta-name' => 'Another meta template',
+	 * 		),
+	 * )
+	 * 
+	 * Settings templates will be used for missing indexes in the array.
+	 */
+	public function crunch( $ID, $template = array() ) {
+		# Get the attachment post.
+		$post = get_post( $ID );
+		
+		# Extract metadata.
+		$this->get_meta_by_id( $ID );
+		
+		# Update attachment.
+		$this->add_attachment( $ID, $template );
+	}
+	
+	
 	/**
 	 * Replaces template tags in template string.
 	 * 
@@ -237,11 +296,13 @@ class Image_Metadata_Cruncher_Plugin {
 		// restore escaped characters
 		$template = str_replace( 
 			array(
+				'&lt;',
 				'&gt;',
 				'&#039;',
 				'&quot;'
 			),
 			array(
+				'<',
 				'>',
 				"'",
 				'"'
@@ -802,7 +863,7 @@ class Image_Metadata_Cruncher_Plugin {
     public function section_0() {
     	$options = get_option( $this->prefix );
     	
-		if ( intval( $options['version'] ) > 1.0 ) {
+		if ( isset( $options['version'] ) && intval( $options['version'] ) > 1.0 ) {
 			//TODO: Move to defaults
 			// if the plugin has been updated from version 1.0 enable highlighting by default
     		$options['enable_highlighting'] = 'enable';
@@ -1526,6 +1587,6 @@ class Image_Metadata_Cruncher_Plugin {
 }
 
 // instantiate the plugin
-$image_metadata_cruncher_plugin = new Image_Metadata_Cruncher_Plugin();
+$image_metadata_cruncher = new Image_Metadata_Cruncher();
 
 ?>
