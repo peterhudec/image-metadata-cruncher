@@ -2,7 +2,7 @@
 /*
 Plugin Name: Image Metadata Cruncher
 Description: Gives you ultimate controll over which image metadata (EXIF or IPTC) WordPress extracts from an uploaded image and where and in what form it then goes. You can even specify unlimited custom post meta tags as the target of the extracted image metadata. 
-Version: 1.7
+Version: 1.8
 Author: Peter Hudec
 Author URI: http://peterhudec.com
 Plugin URI: http://peterhudec.com/programming/2012/11/13/image-metadata-cruncher-wp-plugin/
@@ -22,7 +22,7 @@ class Image_Metadata_Cruncher {
 	private $keywords;
 	private $pattern;
 	public $plugin_name = 'Image Metadata Cruncher';
-	private $version = 1.7;
+	private $version = 1.5;
 	private $after_update = FALSE;
 	private $settings_slug = 'image_metadata_cruncher-options';
 	private $donate_url = 'https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=RJYHYJJD2VKAN';
@@ -496,43 +496,46 @@ class Image_Metadata_Cruncher {
 	 */
 	private function parse_tag( $match ) {
 		
-		$keywords = isset( $match['keywords'] ) ? explode( '|', $match['keywords'] ) : FALSE;
+		$keywords = isset( $match['keywords'] ) ? explode( '|', $match['keywords'] ) : array();
 		$success = isset( $match['success'] ) ? $match['success'] : FALSE;
 		$default = isset( $match['default'] ) ? $match['default'] : FALSE;
 		$delimiter = isset( $match['delimiter'] ) ? $match['delimiter'] : FALSE;
-			
-	    foreach ( $keywords as $keyword ) {
-	    	// search for key in metadata extracted from the image
-	    	
-	    	//TODO: Sanitize?
-	        $meta = $this->get_meta_by_key( trim( $keyword ), $delimiter );
-	        
-	        if ( $meta ) {
-	        	// return first found meta
-	        	if ( $success ) {
-	        		// if success option specified
-	        		//   return success string with $ dolar sign replaced by found meta
-	        		//   and handle escaped characters
-	        		return str_replace(
-	        			array(
-	        				'\$', // replace escaped dolar sign with some unusual unicode character
-	        				'$', // replace dolar signs for meta value
-	        				'\"', // replace escaped doublequote for doublequote
-	        				'\u2328' // replace \u2328 with dolar sign
-	        			),
-	        			array(
-	        				'\u2328',
-	        				$meta,
-	        				'"',
-	        				'$'
-						),
-	        			$success
-					);
-	        	} else {
-	        		return $meta;
-	        	}
-	        }
-	    }
+		
+		if ( $keywords ) {
+			foreach ( $keywords as $keyword ) {
+		    	// search for key in metadata extracted from the image
+		    	
+		    	//TODO: Sanitize?
+		        $meta = $this->get_meta_by_key( trim( $keyword ), $delimiter );
+		        
+		        if ( $meta ) {
+		        	// return first found meta
+		        	if ( $success ) {
+		        		// if success option specified
+		        		//   return success string with $ dolar sign replaced by found meta
+		        		//   and handle escaped characters
+		        		return str_replace(
+		        			array(
+		        				'\$', // replace escaped dolar sign with some unusual unicode character
+		        				'$', // replace dolar signs for meta value
+		        				'\"', // replace escaped doublequote for doublequote
+		        				'\u2328' // replace \u2328 with dolar sign
+		        			),
+		        			array(
+		        				'\u2328',
+		        				$meta,
+		        				'"',
+		        				'$'
+							),
+		        			$success
+						);
+		        	} else {
+		        		return $meta;
+		        	}
+		        }
+		    }
+		}
+	    
 		
 		// if flow gets here nothing was found so...
 		if ( $default ){

@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: image, metadata, EXIF, IPTC, lightroom, photoshop, photomechanic, photostation, meta
 Requires at least: 2.7
 Tested up to: 3.5
-Stable tag: 1.7
+Stable tag: 1.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -42,7 +42,7 @@ The same but by attachment post ID.
 	
 	$metadata = $image_metadata_cruncher->get_meta_by_id( $attachment_ID );
 	
-You can crunch an allready uploaded attachment with the `crunch()` method.
+You can crunch an already uploaded attachment with the `crunch()` method.
 The template and its indexes are optional. If missing, templates from plugin's settings will be used.
 	
 	$template = array(
@@ -72,7 +72,7 @@ Copy the **image-metadata-cruncher** folder into the plugins directory and activ
 
 == Frequently Asked Questions ==
 
-= Is it possible to extract metadata from allready uploaded images? =
+= Is it possible to extract metadata from already uploaded images? =
 
 You can use the plugin's methods like this:
 
@@ -84,7 +84,7 @@ The same but by attachment post ID.
 	
 	$metadata = $image_metadata_cruncher->get_meta_by_id( $attachment_ID );
 	
-You can crunch an allready uploaded attachment with the `crunch()` method:
+You can crunch an already uploaded attachment with the `crunch()` method:
 Which will extract metadata from the attachment image file and
 update the attachment post according to the optional template array.
 Templates from plugin settings will be used for missing indexes.
@@ -104,6 +104,9 @@ Templates from plugin settings will be used for missing indexes.
 	
 
 == Changelog ==
+
+= 1.8 =
+* Fixed a bug causing the `Invalid argument supplied for foreach()` warning.
 
 = 1.7 =
 * Now you can also use the plugin in your code to extract and crunch metadata of an attachment post.
