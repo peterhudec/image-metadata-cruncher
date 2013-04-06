@@ -800,7 +800,7 @@ class Image_Metadata_Cruncher {
 		$page = add_plugins_page(
 			'Image Metadata Cruncher',
 			'Image Metadata Cruncher',
-			'administrator',
+			'manage_options',
 			"{$this->prefix}-options",
 			array( $this, 'options_cb' )
 		);
