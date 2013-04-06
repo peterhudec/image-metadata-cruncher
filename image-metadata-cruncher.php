@@ -1577,12 +1577,12 @@ class Image_Metadata_Cruncher {
 				$output[ $key ] = array();
 				foreach ( $value as $k => $v ) {
 					// ...and sanitize both key and value
-					$output[ $key ][ esc_attr( $k ) ] = esc_attr( $v );
+					$output[ $key ][ sanitize_text_field( $k ) ] = sanitize_text_field( $v );
 				}
 				
 			} else {
 				// sanitize value
-				$output[ $key ] = esc_attr( $value );
+				$output[ $key ] = sanitize_text_field( $value );
 			}
 		}
 		return $output;
