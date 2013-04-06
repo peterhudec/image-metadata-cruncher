@@ -555,7 +555,7 @@ class Image_Metadata_Cruncher {
 		
 		// matches key in form of: abc:def(>ijk)*
 		$this->keyword = '
-			[\w]+ # caterory prefix
+			[\w]+ # category prefix
 			: # colon
 			[\w.:#-]+ # keyword first part
 			(?: # zero or more keyword parts
