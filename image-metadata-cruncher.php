@@ -647,7 +647,7 @@ class Image_Metadata_Cruncher {
 	    }
 		
 	    if ( $file == $this_plugin ) {
-	    	$url = get_bloginfo( 'wpurl' ) . "/wp-admin/admin.php?page={$this->settings_slug}";
+	    	$url = esc_url( admin_url( "admin.php?page={$this->settings_slug}" ) );
 	        $settings_link = "<a href=\"$url\">Settings</a>";
 	        array_unshift( $links, $settings_link );
 	    }
@@ -662,7 +662,7 @@ class Image_Metadata_Cruncher {
 	 */
 	public function plugin_row_meta( $links, $file ) {
 		if ( $file == plugin_basename( __FILE__ ) ) {
-			$url = get_bloginfo( 'wpurl' ) . "/wp-admin/admin.php?page={$this->settings_slug}";
+			$url = esc_url( admin_url( "admin.php?page={$this->settings_slug}" ) );
 	        $links[] = "<a href=\"$url\">Settings</a>";
 			$links[] = "<a href=\"$this->donate_url\">Donate</a>";
 		}
