@@ -555,7 +555,7 @@ class Image_Metadata_Cruncher {
 		
 		// matches key in form of: abc:def(>ijk)*
 		$this->keyword = '
-			[\w]+ # caterory prefix
+			[\w]+ # category prefix
 			: # colon
 			[\w.:#-]+ # keyword first part
 			(?: # zero or more keyword parts
@@ -647,7 +647,7 @@ class Image_Metadata_Cruncher {
 	    }
 		
 	    if ( $file == $this_plugin ) {
-	    	$url = get_bloginfo( 'wpurl' ) . "/wp-admin/admin.php?page={$this->settings_slug}";
+	    	$url = esc_url( admin_url( "admin.php?page={$this->settings_slug}" ) );
 	        $settings_link = "<a href=\"$url\">Settings</a>";
 	        array_unshift( $links, $settings_link );
 	    }
@@ -662,7 +662,7 @@ class Image_Metadata_Cruncher {
 	 */
 	public function plugin_row_meta( $links, $file ) {
 		if ( $file == plugin_basename( __FILE__ ) ) {
-			$url = get_bloginfo( 'wpurl' ) . "/wp-admin/admin.php?page={$this->settings_slug}";
+			$url = esc_url( admin_url( "admin.php?page={$this->settings_slug}" ) );
 	        $links[] = "<a href=\"$url\">Settings</a>";
 			$links[] = "<a href=\"$this->donate_url\">Donate</a>";
 		}
@@ -800,7 +800,7 @@ class Image_Metadata_Cruncher {
 		$page = add_plugins_page(
 			'Image Metadata Cruncher',
 			'Image Metadata Cruncher',
-			'administrator',
+			'manage_options',
 			"{$this->prefix}-options",
 			array( $this, 'options_cb' )
 		);
@@ -1577,12 +1577,12 @@ class Image_Metadata_Cruncher {
 				$output[ $key ] = array();
 				foreach ( $value as $k => $v ) {
 					// ...and sanitize both key and value
-					$output[ $key ][ esc_attr( $k ) ] = esc_attr( $v );
+					$output[ $key ][ sanitize_text_field( $k ) ] = sanitize_text_field( $v );
 				}
 				
 			} else {
 				// sanitize value
-				$output[ $key ] = esc_attr( $value );
+				$output[ $key ] = sanitize_text_field( $value );
 			}
 		}
 		return $output;
