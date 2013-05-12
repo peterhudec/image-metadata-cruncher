@@ -170,7 +170,10 @@ class Image_Metadata_Cruncher {
 		
 		// parse iptc
 		//  IPTC is stored in the APP13 key of the extracted metadata
-		$iptc = iptcparse( $meta['APP13'] );
+		$iptc = null;
+		if ( isset( $meta['APP13'] ) ) {
+			$iptc = iptcparse( $meta['APP13'] );
+		}
 		
 		if ( $iptc ) {
 			// symplify array structure
