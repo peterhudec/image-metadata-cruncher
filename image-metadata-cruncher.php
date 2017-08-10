@@ -2,13 +2,14 @@
 /*
 Plugin Name: Image Metadata Cruncher
 Description: Gives you ultimate controll over which image metadata (EXIF or IPTC) WordPress extracts from an uploaded image and where and in what form it then goes. You can even specify unlimited custom post meta tags as the target of the extracted image metadata. 
-Version: 1.8
+Version: 1.9
 Author: Peter Hudec
 Author URI: http://peterhudec.com
 Plugin URI: http://peterhudec.com/programming/2012/11/13/image-metadata-cruncher-wp-plugin/
 License: GPL2
 */
 
+/* version 1.9 added 'crunch' tab. Feature added by Joe Hudson. Allows a list of image attachment ids to be submitted for crunching with the current metadata template. No fix for the reported XSS and CSRF security vulnerabilities: http://www.cvedetails.com/product/31124/Image-Metadata-Cruncher-Project-Image-Metadata-Cruncher.html?vendor_id=15259 */
 
 /**
  * Main plugin class
@@ -728,6 +729,7 @@ class Image_Metadata_Cruncher {
 	    $this->section( 3, 'Available metadata keywords:' );
 	    $this->section( 4, 'How to Use Template Tags' );
 	    $this->section( 5, 'About Image Metadata Cruncher:' );
+		$this->section( 6, 'Crunch specified image attachment IDs:' );
 	    
 	    ///////////////////////////////////
 	    // Options
@@ -794,6 +796,21 @@ class Image_Metadata_Cruncher {
 	        "{$this->prefix}-section-1",      // section page
 	        "{$this->prefix}_section_1"       // section id
 		);
+		
+		// IDs to crunch
+	    register_setting(
+	        "{$this->prefix}_crunchids",    // option group
+	        $this->prefix,                    // option name
+	        array( $this, 'sanitizer' )       // sanitizer
+	    );
+		
+	    add_settings_field(
+	        "{$this->prefix}_crunchids",    // field id
+	        'Attachment IDs:',                   // title
+	        array( $this, 'crunch_cb' ), // callback
+	        "{$this->prefix}-section-6",      // section page
+	        "{$this->prefix}_section_6"       // section id
+		);
 	}
 	
 	/**
@@ -839,6 +856,7 @@ class Image_Metadata_Cruncher {
 				<a href="?page=image_metadata_cruncher-options&tab=metadata" class="nav-tab <?php active_tab( 'metadata', $active_tab ); ?>">Available Metadata</a>
 				<a href="?page=image_metadata_cruncher-options&tab=usage" class="nav-tab <?php active_tab( 'usage', $active_tab ); ?>"><?php _e( 'How to Use Template Tags' ) ?></a>
 				<a href="?page=image_metadata_cruncher-options&tab=about" class="nav-tab <?php active_tab( 'about', $active_tab ); ?>">About</a>
+				<a href="?page=image_metadata_cruncher-options&tab=crunch" class="nav-tab <?php active_tab( 'crunch', $active_tab ); ?>">Crunch</a>
 			</h2>
 			
 			<?php if ( $active_tab == 'settings' ): ?>
@@ -858,6 +876,44 @@ class Image_Metadata_Cruncher {
 				<?php do_settings_sections( "{$this->prefix}-section-4" ); ?>
 			<?php elseif ( $active_tab == 'about' ): ?>
 				<?php do_settings_sections( "{$this->prefix}-section-5" ); ?>
+			<?php elseif ( $active_tab == 'crunch' ): ?>
+				<form method="post">
+				<?php 
+			//	settings_fields( "{$this->prefix}_crunchids" ); // renders hidden input fields
+				do_settings_sections( "{$this->prefix}-section-6" ); 
+				?>
+				<div class="highlighted">				
+			<!--	<input type="text" name="image-metadata-cruncher[crunchids]"></input> -->
+				</div>
+				<?php
+				submit_button('Crunch');
+				?>
+				</form>
+				<?php
+				//was the form submitted?
+				if(!empty($_POST) && ($_POST['image_metadata_cruncher']['crunchids'])){ // form was submitted
+				$idst = sanitize_text_field($_POST['image_metadata_cruncher']['crunchids']);
+				// do the crunching :)
+				$ids = explode(',', trim($idst));
+				
+				$c = 0;
+				$cl = '';
+				if(is_array($ids)){
+					foreach($ids as $id){
+						$id = trim($id);
+						if((is_numeric($id))){
+								$this->crunch($id);
+								$c++;
+								$cl .= $id . ',';
+						}
+					}
+				}
+				if($c){ ?>
+				<div class="highlighted"><p>Crunched <?php echo $c; ?> attachments: <br>
+				<?php echo $cl; ?></p></div>
+				<?php }
+				}
+					?>
 			<?php endif ?>
 		</div>
 	<?php }
@@ -1538,7 +1594,15 @@ class Image_Metadata_Cruncher {
 			<img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
 		</form>
 	<?php }
-		
+	
+	// crunch
+    public function section_6()	{ ?>
+	  <p>Enter IDs of images to (re)crunch, with the default template.
+	  </p>
+	  
+	 <?php
+	}
+	
 	///////////////////////////////////
     // Options callbacks
     ///////////////////////////////////
@@ -1546,6 +1610,7 @@ class Image_Metadata_Cruncher {
     /**
 	 * General callback for media form fields
 	 */
+	 
 	private function cb( $key ) {
 		$options = get_option( $this->prefix );
 		$value = sanitize_text_field($options[$key]);
@@ -1555,7 +1620,8 @@ class Image_Metadata_Cruncher {
 		<div class="highlighted ce" contenteditable="true"><?php echo $value; ?></div>
 		<?php // used textarea because hidden input caused bugs when whitespace got converted to &nbsp; ?>
 		<textarea class="hidden-input" id="<?php echo $this->prefix; ?>[<?php echo $key; ?>]" name="<?php echo $this->prefix; ?>[<?php echo $key; ?>]"><?php echo $value; ?></textarea>
-	<?php }
+	<?php 
+	}
 	
 	public function title_cb() { $this->cb( 'title' ); }
 	
@@ -1564,6 +1630,8 @@ class Image_Metadata_Cruncher {
 	public function caption_cb() { $this->cb( 'caption' ); }
 	
 	public function description_cb() { $this->cb( 'description' ); }
+	
+	public function crunch_cb() { $this->cb( 'crunchids' ); }
 	
 	/**
 	 * Escapes dangerous characters from settings form fields
